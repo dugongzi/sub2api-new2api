@@ -556,7 +556,104 @@ export default {
 
   modelSquare: {
     title: 'Model Square',
-    description: 'Browse available models, capabilities, and pricing'
+    description: 'Discover models for every workflow and compare capabilities, pricing, and group rates',
+    resultCount: '{count} models found',
+    searchPlaceholder: 'Search by model name, ID, or provider...',
+    copySuccess: 'Model ID copied: {id}',
+    filters: {
+      provider: 'Provider',
+      group: 'Group',
+      category: 'Model type',
+      allProviders: 'All providers',
+      favorites: 'Favorites only',
+      reset: 'Reset filters'
+    },
+    categories: {
+      all: 'All models',
+      chat: 'Chat',
+      reasoning: 'Reasoning',
+      image: 'Image',
+      video: 'Video',
+      embedding: 'Embedding'
+    },
+    groups: {
+      default: 'Default group',
+      developer: 'Developer group',
+      vip: 'VIP group'
+    },
+    badges: {
+      recommended: 'Recommended',
+      new: 'New',
+      popular: 'Popular'
+    },
+    fields: {
+      category: 'Type',
+      context: 'Context window',
+      maxOutput: 'Max output',
+      inputPrice: 'Input price',
+      outputPrice: 'Output price',
+      multiplier: 'Current rate',
+      group: 'Group',
+      inputMultiplier: 'Input rate',
+      outputMultiplier: 'Output rate',
+      effectiveInput: 'Effective input',
+      effectiveOutput: 'Effective output',
+      groupMultiplier: 'Group rate (input / output)'
+    },
+    units: {
+      perMillionTokens: 'Price per 1M tokens',
+      perImage: 'Price per image',
+      perSecond: 'Price per second of video'
+    },
+    capabilities: {
+      vision: 'Vision',
+      tools: 'Tool use',
+      reasoning: 'Reasoning',
+      streaming: 'Streaming',
+      structuredOutput: 'Structured output',
+      imageGeneration: 'Image generation',
+      videoGeneration: 'Video generation',
+      embedding: 'Embedding'
+    },
+    actions: {
+      favorite: 'Favorite model',
+      unfavorite: 'Remove favorite',
+      compare: 'Add to compare',
+      copyId: 'Copy model ID',
+      details: 'View details'
+    },
+    detail: {
+      title: 'Model details',
+      parameters: 'Parameters and base pricing',
+      capabilities: 'Capabilities',
+      groupRates: 'Group rates and effective pricing',
+      groupRatesHint: 'Effective pricing is calculated from the base price and group rate',
+      currentGroup: 'Current'
+    },
+    compare: {
+      title: 'Compare models',
+      dimension: 'Dimension',
+      selected: '{count} / 3 models selected',
+      action: 'Compare',
+      clear: 'Clear',
+      remove: 'Remove from comparison',
+      limit: 'You can compare up to 3 models at once',
+      groupHint: 'Input and output rates are shown for “{group}”.'
+    },
+    empty: {
+      title: 'No matching models',
+      description: 'Try changing the search term, provider, group, or model type.'
+    },
+    models: {
+      gpt41: 'A versatile flagship model for instruction following, coding, and long-context work.',
+      claudeSonnet4: 'Built for complex coding, document analysis, and professional tasks requiring dependable reasoning.',
+      gemini25Pro: 'A native multimodal reasoning model for long documents, video understanding, and complex analysis.',
+      deepseekR1: 'A cost-effective reasoning model optimized for mathematics, code, and logic problems.',
+      qwen3235b: 'Switches between thinking and direct modes for multilingual work and tool-enabled workflows.',
+      dalle3: 'Generates high-quality images from natural-language prompts with strong instruction understanding.',
+      veo3: 'High-quality video generation with native audio for creative media production.',
+      embedding3Large: 'A high-accuracy text embedding model for retrieval, clustering, and semantic search.'
+    }
   },
 
   mediaStudio: {

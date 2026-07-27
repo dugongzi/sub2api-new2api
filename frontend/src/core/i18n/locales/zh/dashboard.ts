@@ -561,7 +561,104 @@ export default {
 
   modelSquare: {
     title: '模型广场',
-    description: '浏览可用模型及其能力和定价'
+    description: '发现适合不同场景的模型，比较能力、价格与分组倍率',
+    resultCount: '找到 {count} 个模型',
+    searchPlaceholder: '搜索模型名称、ID 或供应商...',
+    copySuccess: '已复制模型 ID：{id}',
+    filters: {
+      provider: '供应商',
+      group: '分组',
+      category: '模型类型',
+      allProviders: '全部供应商',
+      favorites: '只看收藏',
+      reset: '重置筛选'
+    },
+    categories: {
+      all: '全部模型',
+      chat: '文本对话',
+      reasoning: '深度推理',
+      image: '图像生成',
+      video: '视频生成',
+      embedding: '向量嵌入'
+    },
+    groups: {
+      default: '默认分组',
+      developer: '开发者分组',
+      vip: 'VIP 分组'
+    },
+    badges: {
+      recommended: '推荐',
+      new: '新上线',
+      popular: '热门'
+    },
+    fields: {
+      category: '类型',
+      context: '上下文窗口',
+      maxOutput: '最大输出',
+      inputPrice: '输入价格',
+      outputPrice: '输出价格',
+      multiplier: '当前倍率',
+      group: '分组',
+      inputMultiplier: '输入倍率',
+      outputMultiplier: '输出倍率',
+      effectiveInput: '实际输入价格',
+      effectiveOutput: '实际输出价格',
+      groupMultiplier: '分组倍率（输入 / 输出）'
+    },
+    units: {
+      perMillionTokens: '价格单位：每百万 Tokens',
+      perImage: '价格单位：每张图片',
+      perSecond: '价格单位：每秒视频'
+    },
+    capabilities: {
+      vision: '视觉理解',
+      tools: '工具调用',
+      reasoning: '深度推理',
+      streaming: '流式输出',
+      structuredOutput: '结构化输出',
+      imageGeneration: '图像生成',
+      videoGeneration: '视频生成',
+      embedding: '向量嵌入'
+    },
+    actions: {
+      favorite: '收藏模型',
+      unfavorite: '取消收藏',
+      compare: '加入对比',
+      copyId: '复制模型 ID',
+      details: '查看详情'
+    },
+    detail: {
+      title: '模型详情',
+      parameters: '模型参数与基础价格',
+      capabilities: '支持能力',
+      groupRates: '分组倍率与实际价格',
+      groupRatesHint: '实际价格由基础价格乘以对应分组倍率得出',
+      currentGroup: '当前'
+    },
+    compare: {
+      title: '模型对比',
+      dimension: '对比维度',
+      selected: '已选择 {count} / 3 个模型',
+      action: '开始对比',
+      clear: '清空',
+      remove: '移出对比',
+      limit: '最多同时对比 3 个模型',
+      groupHint: '当前按“{group}”展示输入与输出倍率。'
+    },
+    empty: {
+      title: '没有找到匹配的模型',
+      description: '尝试调整关键词、供应商、分组或模型类型。'
+    },
+    models: {
+      gpt41: '兼顾指令遵循、编程与长上下文处理的通用旗舰模型。',
+      claudeSonnet4: '擅长复杂编程、文档分析和需要稳定推理的专业任务。',
+      gemini25Pro: '原生多模态推理模型，适合长文档、视频理解与复杂分析。',
+      deepseekR1: '面向数学、代码和逻辑问题优化的高性价比推理模型。',
+      qwen3235b: '支持思考与非思考模式切换，适合多语言和工具调用场景。',
+      dalle3: '根据自然语言描述生成高质量图像，具备良好的文字理解能力。',
+      veo3: '支持原生音频的高质量视频生成模型，适合创意内容制作。',
+      embedding3Large: '高精度文本向量模型，适用于检索、聚类和语义搜索。'
+    }
   },
 
   mediaStudio: {
