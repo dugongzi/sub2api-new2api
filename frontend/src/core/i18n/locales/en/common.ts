@@ -166,6 +166,7 @@ export default {
     groups: 'Groups',
     channels: 'Channels',
     modelSquare: 'Model Square',
+    mediaStudio: 'Media Studio',
     availableChannels: 'Available Channels',
     subscriptions: 'Subscriptions',
     accounts: 'Accounts',

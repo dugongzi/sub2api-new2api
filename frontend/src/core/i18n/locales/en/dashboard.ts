@@ -559,6 +559,11 @@ export default {
     description: 'Browse available models, capabilities, and pricing'
   },
 
+  mediaStudio: {
+    title: 'Media Studio',
+    description: 'Create and manage images, videos, and other media'
+  },
+
   // Available Channels (user-facing)
   availableChannels: {
     title: 'Available Channels',

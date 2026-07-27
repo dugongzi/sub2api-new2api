@@ -15,6 +15,7 @@ import { usageRoutes } from '@/features/usage'
 import { billingRoutes } from '@/features/billing'
 import { affiliateRoutes } from '@/features/affiliate'
 import { modelSquareRoutes } from '@/features/model-square'
+import { mediaStudioRoutes } from '@/features/media-studio'
 import { channelsUserRoutes } from '@/features/channels-user'
 import { profileRoutes } from '@/features/profile'
 import { subscriptionsRoutes } from '@/features/subscriptions'
@@ -53,6 +54,7 @@ const routes: RouteRecordRaw[] = [
   ...billingRoutes,
   ...affiliateRoutes,
   ...modelSquareRoutes,
+  ...mediaStudioRoutes,
   ...channelsUserRoutes,
   ...profileRoutes,
   ...subscriptionsRoutes,

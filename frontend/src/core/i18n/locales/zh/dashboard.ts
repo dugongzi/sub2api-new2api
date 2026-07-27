@@ -564,6 +564,11 @@ export default {
     description: '浏览可用模型及其能力和定价'
   },
 
+  mediaStudio: {
+    title: '媒体工坊',
+    description: '创建和管理图片、视频与其他媒体内容'
+  },
+
   // Available Channels (user-facing)
   availableChannels: {
     title: '可用渠道',
