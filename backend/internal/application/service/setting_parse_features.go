@@ -65,6 +65,9 @@ func (s *SettingService) applyFeatureSettings(result *SystemSettings, settings m
 	// Media Studio feature (default: disabled; strict true)
 	result.MediaStudioEnabled = settings[SettingKeyMediaStudioEnabled] == "true"
 
+	// Custom model configuration feature (default: disabled; strict true)
+	result.CustomModelConfigEnabled = settings[SettingKeyCustomModelConfigEnabled] == "true"
+
 	// IPv6 egress management UI (default: disabled; strict true)
 	result.IPv6EgressUIEnabled = settings[SettingKeyIPv6EgressUIEnabled] == "true"
 

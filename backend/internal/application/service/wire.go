@@ -263,6 +263,7 @@ func ProvideAccountTestService(
 	cfg *config.Config,
 	tlsFPProfileService *TLSFingerprintProfileService,
 	openAIGatewayService *OpenAIGatewayService,
+	customModelCapabilities CustomModelCapabilityResolver,
 ) *AccountTestService {
 	service := NewAccountTestService(
 		accountRepo,
@@ -276,6 +277,7 @@ func ProvideAccountTestService(
 	)
 	service.agentIdentityWS = openAIGatewayService
 	service.openAIModelsManifest = openAIGatewayService
+	service.customModelCapabilities = customModelCapabilities
 	return service
 }
 

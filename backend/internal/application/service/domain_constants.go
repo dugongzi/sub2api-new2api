@@ -452,6 +452,10 @@ const (
 	// It is opt-in so rolling upgrades do not expose a new generation workspace unexpectedly.
 	SettingKeyMediaStudioEnabled = "media_studio_enabled"
 
+	// SettingKeyCustomModelConfigEnabled enables the custom model configuration feature,
+	// allowing administrators to manually configure model capabilities (image, video, audio).
+	SettingKeyCustomModelConfigEnabled = "custom_model_config_enabled"
+
 	// SettingKeyIPv6EgressUIEnabled controls only the administrator IPv6 egress
 	// management surface. Runtime egress routing remains governed by deployment
 	// configuration so hiding the page cannot interrupt active account traffic.
