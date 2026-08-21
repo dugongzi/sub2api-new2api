@@ -11,7 +11,6 @@ import { useAnnouncementStore } from '@/features/announcements/presentation/stor
 import { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
 import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
-import { useSupportUnreadPolling } from '@/features/support-chat/presentation/composables/useSupportUnreadPolling'
 import { updateFavicon } from '@/core/services/branding'
 
 const AnnouncementPopup = defineAsyncComponent(
@@ -33,10 +32,6 @@ const hasAnnouncementPopup = computed(() => announcementStore.currentPopup !== n
 const needsAdminCompliance = computed(
   () => authStore.isAuthenticated && authStore.isAdmin && adminComplianceStore.shouldShow,
 )
-useSupportUnreadPolling({
-  isAuthenticated: () => authStore.isAuthenticated,
-  isAdmin: () => authStore.isAdmin,
-})
 
 function updateDocumentTitle() {
   const customMenuItems = [
