@@ -1,29 +1,32 @@
 <template>
   <section
-    class="group/card rounded-xl bg-gradient-to-br from-white via-white to-gray-50/40 dark:from-dark-850 dark:via-dark-850 dark:to-dark-800 backdrop-blur-sm border border-gray-200/70 dark:border-dark-700/60 shadow-sm hover:shadow-md dark:shadow-dark-900/30 transition-all duration-300 overflow-hidden"
+    class="group/card rounded-xl bg-gradient-to-br from-white via-white to-gray-50/40 dark:from-dark-800 dark:via-dark-800 dark:to-dark-900 backdrop-blur-sm border border-gray-200/70 dark:border-dark-700/60 shadow-sm hover:shadow-md dark:shadow-dark-900/30 transition-all duration-300 overflow-hidden"
   >
-    <!-- Header: provider identity + summary - 水平紧凑布局 -->
-    <header class="relative flex items-center gap-4 px-6 py-4 border-b border-gray-100/80 dark:border-dark-700/50 bg-gradient-to-r from-gray-50/30 via-transparent to-transparent dark:from-dark-800/20">
+    <!-- Header: provider identity + summary - 可点击折叠 -->
+    <header 
+      class="relative flex items-center gap-4 px-6 py-4 border-b border-gray-100/80 dark:border-dark-700/60 bg-gradient-to-r from-gray-50/30 via-transparent to-transparent dark:from-dark-700/20 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-dark-700/30 transition-colors"
+      @click="isCollapsed = !isCollapsed"
+    >
       <span
-        class="w-12 h-12 rounded-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm grid place-items-center flex-shrink-0 transition-transform group-hover/card:scale-105 duration-300"
-        :class="[providerGradient(provider), providerTintClass]"
-      >
+          class="w-12 h-12 rounded-xl ring-1 ring-black/[0.04] dark:ring-white/[0.08] shadow-sm grid place-items-center flex-shrink-0 transition-transform group-hover/card:scale-105 duration-300"
+          :class="[providerGradient(provider), providerTintClass]"
+        >
         <ProviderIcon :provider="provider" :size="24" />
       </span>
       
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2.5 min-w-0">
-          <span class="text-base font-bold tracking-tight truncate text-gray-900 dark:text-gray-50">
+          <span class="text-base font-bold tracking-tight truncate text-gray-900 dark:text-white">
             {{ providerLabel(provider) }}
           </span>
           <span
             v-if="modeLabelText"
-            class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider flex-shrink-0 bg-gray-100/90 text-gray-700 dark:bg-dark-700/70 dark:text-gray-300 border border-gray-200/60 dark:border-dark-600/60"
+            class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider flex-shrink-0 bg-gray-100/90 text-gray-700 dark:bg-dark-700/80 dark:text-gray-300 border border-gray-200/60 dark:border-dark-600/60"
           >
             {{ modeLabelText }}
           </span>
         </div>
-        <div class="mt-1 text-xs truncate text-gray-600 dark:text-gray-400 font-medium">
+        <div class="mt-1 text-xs truncate text-gray-600 dark:text-gray-300 font-medium">
           {{ summaryLabel }}
         </div>
       </div>
@@ -34,27 +37,43 @@
       >
         {{ statusLabel(overallStatus) }}
       </span>
+      
+      <!-- 折叠指示器 -->
+      <button
+          class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100/80 dark:hover:bg-dark-700/60 transition-all flex-shrink-0"
+          @click.stop="isCollapsed = !isCollapsed"
+        >
+        <Icon
+          name="chevronDown"
+          size="sm"
+          class="text-gray-500 dark:text-gray-400 transition-transform duration-300"
+          :class="{ 'rotate-180': isCollapsed }"
+        />
+      </button>
     </header>
 
-    <!-- 模型列表 - 优化信息密度的网格布局 -->
-    <div class="px-6 py-4">
+    <!-- 模型列表 - 优化信息密度的网格布局，支持折叠 -->
+    <div 
+      v-show="!isCollapsed"
+      class="px-6 py-4 transition-all duration-300"
+    >
       <div class="grid gap-3 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <button
           v-for="row in sortedItems"
           :key="row.id"
           type="button"
-          class="group/item relative text-left p-4 rounded-lg bg-gray-50/60 dark:bg-dark-800/40 border border-gray-200/50 dark:border-dark-700/50 hover:border-gray-300 dark:hover:border-dark-600 hover:bg-white dark:hover:bg-dark-800/70 transition-all duration-200 hover:shadow-sm active:scale-[0.98]"
+          class="group/item relative text-left p-4 rounded-lg bg-gray-50/60 dark:bg-dark-900/40 border border-gray-200/50 dark:border-dark-700/50 hover:border-gray-300 dark:hover:border-dark-600 hover:bg-white dark:hover:bg-dark-800/70 transition-all duration-200 hover:shadow-sm active:scale-[0.98]"
           @click="emit('cardClick', row)"
         >
           <!-- 模型信息头部 -->
           <div class="flex items-start justify-between gap-2.5 mb-3">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 min-w-0 mb-1">
-                <span class="text-sm font-bold truncate text-gray-900 dark:text-gray-50 leading-tight">
+                <span class="text-sm font-bold truncate text-gray-900 dark:text-white leading-tight">
                   {{ row.group_name || row.name || t('channelStatus.unnamedGroup') }}
                 </span>
               </div>
-              <span class="inline-block font-mono text-[10px] truncate text-gray-600 dark:text-gray-400 bg-gray-100/70 dark:bg-dark-900/50 px-2 py-0.5 rounded border border-gray-200/50 dark:border-dark-700/50">
+              <span class="inline-block font-mono text-[10px] truncate text-gray-600 dark:text-gray-400 bg-gray-100/70 dark:bg-dark-800/60 px-2 py-0.5 rounded border border-gray-200/50 dark:border-dark-700/40">
                 {{ row.primary_model }}
               </span>
             </div>
@@ -69,12 +88,12 @@
 
           <!-- 指标数据 -->
           <div class="flex items-center gap-4 mb-3 text-xs">
-            <div class="flex items-center gap-1.5 font-mono tabular-nums font-semibold text-gray-700 dark:text-gray-300">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400"></span>
+              <div class="flex items-center gap-1.5 font-mono tabular-nums font-semibold text-gray-700 dark:text-gray-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shadow-sm"></span>
               <span>{{ formatLatencyWithUnit(row.primary_latency_ms) }}</span>
             </div>
             <div class="flex items-center gap-1.5 tabular-nums font-bold" :style="availabilityColor(row)">
-              <span class="w-1.5 h-1.5 rounded-full" :style="availabilityColor(row)"></span>
+              <span class="w-1.5 h-1.5 rounded-full shadow-sm" :style="availabilityColor(row)"></span>
               <span>{{ formatPercent(resolveAvailability(row)) }}</span>
             </div>
           </div>
@@ -91,7 +110,7 @@
             <Icon
               name="chevronRight"
               size="xs"
-              class="text-gray-400 dark:text-gray-500"
+              class="text-gray-400 dark:text-gray-400"
             />
           </div>
         </button>
@@ -101,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   UserMonitorView,
@@ -117,6 +136,7 @@ import {
 } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 import ProviderIcon from './ProviderIcon.vue'
 import MonitorTimeline from './MonitorTimeline.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 /**
  * 计算模型的综合健康度评分
@@ -200,6 +220,10 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// 折叠状态
+const isCollapsed = ref(false)
+
 const { statusLabel, statusBadgeClass, modeLabel, providerLabel, formatLatencyWithUnit, formatPercent } =
   useChannelMonitorFormat()
 
