@@ -123,6 +123,26 @@ it('offers Grok catalog IDs without changing the selected whitelist', async () =
   expect(wrapper.findAll('[data-testid="model-option"]').some(row => row.text().includes('grok-custom-new'))).toBe(false)
 })
 
+it('offers upstream model sync for every OpenAI-compatible API key platform', () => {
+  for (const platform of ['kimi', 'zhipu', 'deepseek', 'minimax', 'opencode_go']) {
+    const wrapper = mountSelector({
+      platform,
+      syncCredentials: { platform, type: 'apikey', base_url: 'https://example.test/v1', api_key: 'provider-key' }
+    })
+    const sync = wrapper.findAll('button').find(button => button.text() === 'admin.accounts.syncUpstreamModels')
+    expect(sync, `missing upstream sync button for ${platform}`).toBeTruthy()
+  }
+})
+
+it('hides upstream model sync for platforms without a model list adapter', () => {
+  const wrapper = mountSelector({
+    platform: 'typesafe',
+    syncCredentials: { platform: 'typesafe', type: 'apikey', api_key: 'provider-key' }
+  })
+  const sync = wrapper.findAll('button').find(button => button.text() === 'admin.accounts.syncUpstreamModels')
+  expect(sync).toBeUndefined()
+})
+
 it('ignores an upstream result after the selector unmounts', async () => {
   vi.clearAllMocks()
   let resolve!: (value: { models: string[] }) => void
