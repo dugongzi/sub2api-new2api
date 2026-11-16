@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	clientip "github.com/Wei-Shaw/sub2api/internal/shared/ip"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
+	clientip "github.com/DR-lin-eng/sub2api-no2api/internal/shared/ip"
 )
 
 // CustomMenuItem represents a user-configured custom menu entry.
@@ -238,6 +238,8 @@ type SystemSettings struct {
 	OpenAILocationLongitude                float64 `json:"openai_location_longitude"`
 	OpenAIOAuthForceRelayEnabled           bool    `json:"openai_oauth_force_relay_enabled"`
 	OpenAIOAuthForceRelayBaseURL           string  `json:"openai_oauth_force_relay_base_url"`
+	OpenAIOAuthAttestationEnabled          bool    `json:"openai_oauth_attestation_enabled"`
+	OpenAILenovoAttributionEnabled         bool    `json:"openai_lenovo_attribution_enabled"`
 	EnableFingerprintUnification           bool    `json:"enable_fingerprint_unification"`
 	EnableMetadataPassthrough              bool    `json:"enable_metadata_passthrough"`
 	EnableCCHSigning                       bool    `json:"enable_cch_signing"`

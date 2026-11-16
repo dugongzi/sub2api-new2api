@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/transport/http/handler/dto"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/transport/http/handler/dto"
 )
 
 // settingKeyJSONAliases contains request fields whose JSON name differs from
@@ -176,6 +176,14 @@ func omittedSettingKeys(sentFields map[string]json.RawMessage) service.OmittedSe
 	for jsonName, settingKey := range settingKeyByJSONName {
 		if _, sent := sentFields[jsonName]; !sent {
 			omitted[settingKey] = struct{}{}
+		}
+	}
+	// These runtime switches also use presence at the persistence boundary:
+	// an unrelated save prepared before another admin's toggle must not write
+	// the earlier snapshot back over that toggle.
+	for _, key := range []string{service.SettingKeyOpenAIOAuthAttestationEnabled, service.SettingKeyOpenAILenovoAttributionEnabled} {
+		if raw, sent := sentFields[key]; !sent || strings.TrimSpace(string(raw)) == "null" {
+			omitted[key] = struct{}{}
 		}
 	}
 	return omitted

@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
-	"github.com/Wei-Shaw/sub2api/internal/shared/antigravity"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
-	clientip "github.com/Wei-Shaw/sub2api/internal/shared/ip"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/antigravity"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
+	clientip "github.com/DR-lin-eng/sub2api-no2api/internal/shared/ip"
 	"github.com/stretchr/testify/require"
 )
 
@@ -511,8 +511,8 @@ func TestSettingService_UpdateSettings_PaymentVisibleMethodsAndAdvancedScheduler
 	require.NoError(t, err)
 	require.Equal(t, VisibleMethodSourceOfficialAlipay, repo.updates[SettingPaymentVisibleMethodAlipaySource])
 	require.Equal(t, VisibleMethodSourceEasyPayWechat, repo.updates[SettingPaymentVisibleMethodWxpaySource])
-	require.Equal(t, "true", repo.updates[SettingPaymentVisibleMethodAlipayEnabled])
-	require.Equal(t, "false", repo.updates[SettingPaymentVisibleMethodWxpayEnabled])
+	require.NotContains(t, repo.updates, SettingPaymentVisibleMethodAlipayEnabled)
+	require.NotContains(t, repo.updates, SettingPaymentVisibleMethodWxpayEnabled)
 	require.Equal(t, "true", repo.updates[SettingKeyOpenAILowUpstreamRatePriorityEnabled])
 	require.Equal(t, "0.05", repo.updates[SettingKeyOpenAIOAuthSchedulingRateMultiplier])
 	require.Equal(t, "true", repo.updates[SettingKeyOpenAIContentSessionBurstBalanceEnabled])

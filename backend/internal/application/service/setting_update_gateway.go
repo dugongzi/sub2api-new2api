@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/antigravity"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/antigravity"
 )
 
 func writeGatewaySystemSettingUpdates(updates map[string]string, settings *SystemSettings) error {
@@ -26,6 +26,8 @@ func writeGatewaySystemSettingUpdates(updates map[string]string, settings *Syste
 	updates[SettingKeyStreamModePerformanceEnabled] = strconv.FormatBool(settings.StreamModePerformanceEnabled)
 	updates[SettingKeyOpenAIOAuthForceRelayEnabled] = strconv.FormatBool(settings.OpenAIOAuthForceRelayEnabled)
 	updates[SettingKeyOpenAIOAuthForceRelayBaseURL] = strings.TrimSpace(settings.OpenAIOAuthForceRelayBaseURL)
+	updates[SettingKeyOpenAIOAuthAttestationEnabled] = strconv.FormatBool(settings.OpenAIOAuthAttestationEnabled)
+	updates[SettingKeyOpenAILenovoAttributionEnabled] = strconv.FormatBool(settings.OpenAILenovoAttributionEnabled)
 	updates[SettingKeyOpenAIWSModeRouterV2Enabled] = strconv.FormatBool(settings.OpenAIWSModeRouterV2Enabled)
 	updates[SettingKeyOpenAIVisibleOutputTTFTEnabled] = strconv.FormatBool(settings.OpenAIVisibleOutputTTFTEnabled)
 
@@ -53,8 +55,6 @@ func writeGatewaySystemSettingUpdates(updates map[string]string, settings *Syste
 	updates[SettingKeyCodexCLIOnlyEngineFingerprintSignals] = strings.TrimSpace(settings.CodexCLIOnlyEngineFingerprintSignals)
 	updates[SettingPaymentVisibleMethodAlipaySource] = settings.PaymentVisibleMethodAlipaySource
 	updates[SettingPaymentVisibleMethodWxpaySource] = settings.PaymentVisibleMethodWxpaySource
-	updates[SettingPaymentVisibleMethodAlipayEnabled] = strconv.FormatBool(settings.PaymentVisibleMethodAlipayEnabled)
-	updates[SettingPaymentVisibleMethodWxpayEnabled] = strconv.FormatBool(settings.PaymentVisibleMethodWxpayEnabled)
 	updates[SettingKeyOpenAILowUpstreamRatePriorityEnabled] = strconv.FormatBool(settings.OpenAILowUpstreamRatePriorityEnabled)
 	updates[SettingKeyOpenAIOAuthSchedulingRateMultiplier] = strconv.FormatFloat(settings.OpenAIOAuthSchedulingRateMultiplier, 'f', -1, 64)
 	updates[SettingKeyOpenAIContentSessionBurstBalanceEnabled] = strconv.FormatBool(settings.OpenAIContentSessionBurstBalanceEnabled)

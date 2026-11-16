@@ -26,12 +26,12 @@ Sub2API has a built-in payment system that enables user self-service top-up with
 | **WeChat Pay (Direct)** | Native QR, H5, MP/JSAPI Pay | Direct integration with WeChat Pay APIv3 with environment-aware routing |
 | **Stripe** | Card, Alipay, WeChat Pay, Link, etc. | International payments, multi-currency support |
 
-> Alipay/WeChat Pay direct and EasyPay can both exist as backend provider instances, but the frontend always exposes only two visible buttons: `Alipay` and `WeChat Pay`. Admins choose exactly one source for each visible method: direct or EasyPay. Direct channels connect to payment APIs directly with lower fees; EasyPay aggregates through third-party platforms with easier setup.
+> Alipay/WeChat Pay direct and EasyPay can both exist as backend provider instances. The frontend uses the shared `Alipay` and `WeChat Pay` names; enabled instances and their supported methods determine which provider handles checkout. Direct channels connect to payment APIs directly with lower fees; EasyPay aggregates through third-party platforms with easier setup.
 
 > **EasyPay Provider Recommendations**: Both options below are third-party aggregators compatible with the EasyPay protocol. Pick based on the funding channel and settlement currency you need:
 >
 > - **Domestic channel / CNY settlement** — [ZPay](https://z-pay.cn/?uid=23808) (`https://z-pay.cn/?uid=23808`): direct integration with official Alipay / WeChat Pay APIs, fee **1.6%**; funds go straight to the merchant account with **T+1 automatic settlement**. Supports **individual users** (no business license required) with up to 10,000 CNY daily transactions; business-licensed accounts have no limit. Link contains the referral code of [Sub2ApiPay](https://github.com/touwaeriol/sub2apipay) original author [@touwaeriol](https://github.com/touwaeriol) — feel free to remove it.
-> - **International channel / USDT or USD settlement** — [Kyren Topup](https://kyrenpay.com/?code=SUB2API) (`https://kyrenpay.com/?code=SUB2API`): a ready-to-launch global payment stack for AI startups with WeChat Pay and Alipay support, local-currency checkout, and USD settlement. Fees: WeChat 2.5%, Alipay 2.5%; Multiple withdrawal methods are available. Withdrawals to overseas company accounts incur a $20 fee, while USDT withdrawals incur a $30 fee plus a 0.4% transaction fee, settled in **USDT or USD**. No qualification review required — sign up and use immediately, making it the lowest barrier to entry. Withdrawal threshold is relatively high, recommended for users **who do not use domestic Chinese payment channels, cannot tolerate Stripe's 6%+ fees, have high transaction volume, and have USD or USDT channels to receive withdrawn funds**. Kyren Topup charges a $200 account opening fee; signing up via this link (which contains Sub2Api author [@Wei-Shaw](https://github.com/Wei-Shaw)'s referral code) **waives the opening fee**. Feel free to remove it if you prefer.
+> - **International channel / USDT or USD settlement** — [Kyren Topup](https://kyrenpay.com/?code=SUB2API) (`https://kyrenpay.com/?code=SUB2API`): a ready-to-launch global payment stack for AI startups with WeChat Pay and Alipay support, local-currency checkout, and USD settlement. Fees: WeChat 2.5%, Alipay 2.5%; Multiple withdrawal methods are available. Withdrawals to overseas company accounts incur a $20 fee, while USDT withdrawals incur a $30 fee plus a 0.4% transaction fee, settled in **USDT or USD**. No qualification review required — sign up and use immediately, making it the lowest barrier to entry. Withdrawal threshold is relatively high, recommended for users **who do not use domestic Chinese payment channels, cannot tolerate Stripe's 6%+ fees, have high transaction volume, and have USD or USDT channels to receive withdrawn funds**. Kyren Topup charges a $200 account opening fee; the linked signup offer **waives the opening fee**. Review the provider's current terms before use.
 >
 > Please evaluate the security, reliability, and compliance of any third-party payment provider on your own — this project does not endorse or guarantee any of them.
 
@@ -67,12 +67,13 @@ Configure the following in Admin Dashboard **Settings → Payment Settings**:
 
 ### Frontend Visible Method Routing
 
-The current payment UX keeps the frontend method list unified and does not expose provider brands directly:
+Control payments in **Settings → Payment Settings → Provider Management**:
 
-- **Alipay**: when enabled, this button must be routed to either `Alipay (Direct)` or `EasyPay Alipay`
-- **WeChat Pay**: when enabled, this button must be routed to either `WeChat Pay (Direct)` or `EasyPay WeChat`
-- Each visible method can route to only one source at a time
-- If a visible method is enabled without a selected source, the frontend will not expose that method
+- **Enable Payment** is the global switch; disabling it rejects all new orders with `PAYMENT_DISABLED`.
+- Each provider's **Enabled** switch controls that instance. Its payment method buttons control the methods it supports. Disabling every matching instance or deselecting a method removes it from checkout and rejects direct order requests.
+- A single provider source routes automatically without extra source settings. Existing configurations with multiple sources retain their source selection and compatibility routing.
+
+The retired `payment_visible_method_alipay_enabled` and `payment_visible_method_wxpay_enabled` fields no longer control payment availability, and settings saves no longer create or update them. Legacy API fields remain for response and request compatibility; existing database values need no migration. The 2026-11-14 order guard incorrectly treated their default `false` values as active switches, rejecting orders even when global payment and provider instances were enabled. Checkout and order creation now use the same provider state.
 
 ### Load Balance Strategies
 
@@ -275,6 +276,36 @@ User selects amount and payment method
 - Before marking an order as expired, the background job queries the upstream payment status first
 - If the user has actually paid but the callback was delayed, the system will reconcile automatically
 - The background job runs every 60 seconds to check for timed-out orders
+- A payment can recover an order only through the order's `expires_at` plus a 30-minute recovery window. `updated_at` changes from reconciliation writes and is not used as the deadline. Payments received after the window are acknowledged and recorded for manual reconciliation without automatic crediting.
+
+### Refund and Concurrency Rules
+
+- Normal balance refunds claim the order and recheck/deduct funds in one transaction. A concurrent spend that leaves insufficient funds aborts the claim without a gateway refund. Explicit forced refunds retain the available-balance behavior.
+- EasyPay orders without an upstream trade number issue a real refund by merchant order number. Missing Stripe or Airwallex intent references return an error rather than synthetic refund success.
+- Alipay retries reuse the request ID for the same order and refund amount. Timeouts and empty replies retain the deduction in pending state until refund lookup confirms the result. Historical request IDs remain queryable.
+- Stripe callbacks select the original merchant instance before signature verification. Temporary storage or pinned-provider errors remain retryable. Delayed creation responses and reconciliation cannot overwrite an accepted trade or fulfillment lease.
+
+Refund deductions also reclaim Activity Center uplifts proportionally from the actual redemption usage record; cash refunds continue to use the original payment snapshot. Legacy orders without that record retain their snapshot and require manual review of untraceable extra credit.
+
+Migration `258_payment_order_gateway_precision.sql` expands the charged amount to `DECIMAL(21,3)`, preserving existing integer capacity and two-decimal values. Retain the expanded precision during binary rollback. Upgrade every payment-processing node; older nodes retain the previous recovery behavior, and rolling back reintroduces it.
+
+Subscription deductions/revocation and refund claims share one transaction. Pending checkpoints can be replaced on retry. Uncertain gateway outcomes keep the deduction held; providers without a queryable refund ID require manual reconciliation. `REFUND_PREPARED` records the committed deduction before dispatch for crash reconciliation.
+
+For legacy pending refunds whose holds were returned early, full non-forced settlement requires historical proof of a positive approved deduction and authoritative upstream success. Existing negative-balance debt semantics recover any spent shortfall. Records without that proof retain the old available-balance behavior and need manual review; no new debt is inferred.
+
+User checkout locks reserve pending capacity and daily allowance, including unpaid orders within their recovery window. Explicitly disabled payment methods reject direct API checkout. Affiliate cap calculations and grants share the inviter budget lock. Admin-key authentication updates only current usage metadata, preserving concurrent revocations, rotations and scope changes.
+
+### Merchant Limits and Rebate Reversals
+
+Channel minimum, maximum and daily limits are hard checkout conditions, measured against the final quotation including fees. No eligible merchant means checkout is rejected. The creation transaction locks the merchant row, rereads its configuration and usage, and reserves capacity across concurrent users. Invalid limits or storage failures cannot become unlimited capacity; blank configuration or a missing channel still means no configured limit for that channel.
+
+Daily merchant usage includes the original quotations for all orders paid on the current UTC day, including refunded orders. Recoverable unpaid orders, including cancelled, expired and failed creation attempts, reserve capacity through `expires_at + 30 minutes` across midnight. Callback amount tolerance cannot change an admitted reservation. This controls checkout quotations in this application; actual collection limits remain a provider responsibility.
+
+Successful refunds reverse the actual historical rebate in proportion to `refund amount / original recharge amount`, rounded to eight decimals, in the same transaction as the terminal order and success audit. Current campaign settings do not change the original award. Pending or failed refunds do not reverse rebates; repeated confirmation is idempotent. Frozen awards reduce frozen quota; thawed awards reduce available quota. Any shortfall after a transfer becomes affiliate debt. Future rebates repay that debt before becoming transferable, without debiting the inviter's ordinary wallet. User and admin pages expose debt separately from available quota.
+
+Synchronous gateway success is first persisted in the existing pending checkpoint. If local rebate or success-audit settlement then fails, the order remains pending and the existing refund finalization endpoint retries only the local transaction, without issuing another gateway refund or repeating deductions. A process interruption or storage outage before persisting the gateway receipt still needs manual reconciliation using `REFUND_PREPARED` and provider records.
+
+Migration `259_affiliate_refund_reversals.sql` records the reversed amount per award while preserving lifetime grants for cap calculations. Historical entries without `source_order_id` need manual reconciliation; previously completed refunds are not automatically backfilled. Upgrade all payment nodes before processing refunds or changing voucher permissions. Keep migrations 258 and 259 during binary rollback. After a rebate reversal, old lazy-thaw code ignores the reversed amount, so affiliate reads and writes cannot safely resume on an old binary. Keep affiliate processing on the new version, or block all affiliate reads/writes and refunds in maintenance mode until manual reconciliation is complete; disabling new rebate grants alone is insufficient. Old binaries also lack the new voucher permission and hard merchant admission. See [Admin API](ADMIN_API.md) for updating existing keys without changing their values.
 
 ---
 

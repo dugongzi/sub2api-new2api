@@ -13,15 +13,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
-	platformegress "github.com/Wei-Shaw/sub2api/internal/platform/egress"
-	httppool "github.com/Wei-Shaw/sub2api/internal/shared/httpclient"
-	openaipkg "github.com/Wei-Shaw/sub2api/internal/shared/openai"
-	"github.com/Wei-Shaw/sub2api/internal/shared/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/shared/timezone"
-	"github.com/Wei-Shaw/sub2api/internal/shared/tlsfingerprint"
-	"github.com/Wei-Shaw/sub2api/internal/shared/usagestats"
-	"github.com/Wei-Shaw/sub2api/internal/shared/xai"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
+	platformegress "github.com/DR-lin-eng/sub2api-no2api/internal/platform/egress"
+	httppool "github.com/DR-lin-eng/sub2api-no2api/internal/shared/httpclient"
+	openaipkg "github.com/DR-lin-eng/sub2api-no2api/internal/shared/openai"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/pagination"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/timezone"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/tlsfingerprint"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/usagestats"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/xai"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 )
@@ -577,11 +577,9 @@ func (s *AccountUsageService) getUsageForAccount(ctx context.Context, account *A
 	}
 
 	if account.Platform == PlatformOpenAI && account.Type == AccountTypeOAuth {
-		usage, err := s.getOpenAIUsage(ctx, account, forceProbe)
-		if err == nil {
-			s.tryClearRecoverableAccountError(ctx, account)
-		}
-		return usage, err
+		// A usable access token or a cached quota snapshot does not prove that
+		// a previously rejected refresh token has recovered.
+		return s.getOpenAIUsage(ctx, account, forceProbe)
 	}
 
 	if account.Platform == PlatformGemini {

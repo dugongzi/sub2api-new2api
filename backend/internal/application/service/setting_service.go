@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
-	"github.com/Wei-Shaw/sub2api/internal/shared/codexsimulation"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
-	"github.com/Wei-Shaw/sub2api/internal/shared/ip"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/codexsimulation"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/ip"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -139,6 +139,9 @@ type SettingService struct {
 	// instances never share a stale relay target.
 	openAIOAuthForceRelayCache atomic.Value // *cachedOpenAIOAuthForceRelaySettings
 	openAIOAuthForceRelaySF    singleflight.Group
+
+	openAIAuxiliaryCache atomic.Pointer[cachedOpenAIAuxiliarySettings]
+	openAIAuxiliaryMu    sync.Mutex
 
 	codexSimulationSettings         atomic.Pointer[CodexSimulationSettings]
 	codexSimulationSettingsRevision atomic.Uint64

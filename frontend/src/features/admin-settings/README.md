@@ -13,6 +13,7 @@
 - `presentation/widgets/settings-tabs/SettingsOpenAIRequestTimezoneFields.vue`: 网关服务 → 请求转发行为中的 OpenAI 请求时区开关与目标时区；复用主设置统一保存，数据库值覆盖部署默认值，保存后无需重启。
 - `presentation/widgets/settings-tabs/SettingsOpenAILocationFields.vue`: 网关服务 → 请求转发行为中的 OpenAI 大概坐标、账号持久化偏移和缓存精度策略设置。
 - `presentation/widgets/settings-tabs/SettingsImageSchedulingFields.vue`: 网关服务调度面板中的画图模型独立调度开关，允许健康但关闭调度的账号参与画图，复用主设置的加载与统一保存。
+- `presentation/widgets/settings-tabs/SettingsGatewayForwardingPanel.vue`: 独立 OAuth attestation 与 Lenovo 归因开关；统一持久化保存和回填，运行时刷新，旧客户端省略时保留现值。
 - `presentation/widgets/settings-tabs/SettingsOpenAIImagesModeFields.vue`: 网关生图旧版回退开关；关闭时默认使用新版 App 流程，复用主设置的读取、部分保存与回填。
 - `presentation/widgets/settings-tabs/SettingsOAuth2ProviderPanel.vue`: 完整管理员专用的 OAuth2 provider 总开关、issuer、token TTL、客户端、回调、scope 与密钥轮换面板。
 - `presentation/widgets/settings-tabs/gateway-resilience/`: Codex A/B/C、系统强制账号预热、关注模型的 Turn State 自动监测/代理探测/重放、兼容多值随机重放与质量巡检一键同步、临时不可调度、OAuth 401 自动清理、冷却、流超时、请求修正与策略设置卡片；直接复用页面 context，由网关韧性 panel 按原顺序装配。Codex 查询失败时不得显示默认关闭状态，独立强制恢复 action 必须保持可用。
@@ -25,6 +26,8 @@
 新增设置项时，先确定所属 tab 和 datasource 字段，再把交互放入对应 controller。feature 内组件使用静态 import；不要把页面 context 提升为全局 Store，也不要通过 `@/api` 或 `@/stores` 兼容 barrel 新增依赖。保留单次设置加载、统一保存、敏感操作 step-up 和按需挂载语义。
 
 邮件模板、面板限流、管理员 API Key、OAuth2 provider、独立网关策略、Web Search、SMTP 测试及主设置均已迁入明确 owner。`adminSettingsDatasource.ts` 仅服务旧 `src/api/admin` 兼容出口；新调用不得继续扩展 `settingsAPI`。
+
+管理员密钥面板提供独立“读取卡密”权限 `admin.redeem.secrets`，普通读写 scope 不会自动勾选它。已有 scoped/legacy 密钥均通过编辑接口更新权限，保持原密钥值；创建和轮换仍只展示一次完整值。scope 数组完整替换，编辑时保留已有选项。
 
 验证入口：
 

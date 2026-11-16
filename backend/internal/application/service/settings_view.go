@@ -3,7 +3,7 @@ package service
 import (
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/ip"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/ip"
 )
 
 func firstNonEmpty(values ...string) string {
@@ -280,6 +280,8 @@ type SystemSettings struct {
 	OpenAILocationLongitude                float64
 	OpenAIOAuthForceRelayEnabled           bool   `json:"openai_oauth_force_relay_enabled"`
 	OpenAIOAuthForceRelayBaseURL           string `json:"openai_oauth_force_relay_base_url"`
+	OpenAIOAuthAttestationEnabled          bool   `json:"openai_oauth_attestation_enabled"`
+	OpenAILenovoAttributionEnabled         bool   `json:"openai_lenovo_attribution_enabled"`
 	EnableFingerprintUnification           bool   // 是否统一 OAuth 账号的指纹头（默认 true）
 	EnableMetadataPassthrough              bool   // 是否透传客户端原始 metadata（默认 false）
 	EnableCCHSigning                       bool   // 已废弃 no-op：新版 CLI 取消 cch 签名后网关不再注入/签名 cch，开关无效果
@@ -305,8 +307,9 @@ type SystemSettings struct {
 	WebSearchEmulationEnabled bool // 是否启用 web search 模拟
 
 	// Payment visible method routing
-	PaymentVisibleMethodAlipaySource  string
-	PaymentVisibleMethodWxpaySource   string
+	PaymentVisibleMethodAlipaySource string
+	PaymentVisibleMethodWxpaySource  string
+	// Legacy response fields only; updates do not persist these flags.
 	PaymentVisibleMethodAlipayEnabled bool
 	PaymentVisibleMethodWxpayEnabled  bool
 

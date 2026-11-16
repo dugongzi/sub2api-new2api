@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment/provider"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/paymentproviderinstance"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment/provider"
 )
 
 // --- Order Status Constants ---
@@ -41,7 +41,10 @@ const (
 const (
 	// defaultMaxPendingOrders and defaultOrderTimeoutMin are defined in
 	// payment_config_service.go alongside other payment configuration defaults.
-	paymentGraceMinutes = 5
+	// A provider callback can arrive after the checkout deadline, but the
+	// recovery window must be measured from the order deadline rather
+	// than from updated_at, which changes when reconciliation stores metadata.
+	paymentRecoveryWindow = payment.OrderRecoveryWindow
 
 	defaultPageSize    = 20
 	maxPageSize        = 100
@@ -141,6 +144,9 @@ type RefundPlan struct {
 	// Revocation preserves the original expiry; refund failure must restore it
 	// through the subscription owner instead of extending a deleted row.
 	subscriptionRevoked bool
+	// Older pending records only prove an approved balance clawback when
+	// their audit records a positive original deduction.
+	legacyDeductionProven bool
 }
 
 type RefundResult struct {

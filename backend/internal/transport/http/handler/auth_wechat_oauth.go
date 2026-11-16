@@ -12,14 +12,14 @@ import (
 	"strings"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/authidentity"
-	"github.com/Wei-Shaw/sub2api/ent/authidentitychannel"
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
-	"github.com/Wei-Shaw/sub2api/internal/shared/oauth"
-	"github.com/Wei-Shaw/sub2api/internal/shared/response"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/authidentity"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/authidentitychannel"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/oauth"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -1151,7 +1151,9 @@ func exchangeWeChatOAuthCode(ctx context.Context, cfg wechatOAuthConfig, code st
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request wechat access token: %w", err)
+		// net/url errors carry the full request URL, including the app
+		// secret and authorization code. Public redirects must not expose it.
+		return nil, errors.New("request wechat access token failed")
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -1199,7 +1201,7 @@ func fetchWeChatUserInfo(ctx context.Context, tokenResp *wechatOAuthTokenRespons
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request wechat userinfo: %w", err)
+		return nil, errors.New("request wechat userinfo failed")
 	}
 	defer func() { _ = resp.Body.Close() }()
 

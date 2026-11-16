@@ -13,11 +13,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/apicompat"
-	"github.com/Wei-Shaw/sub2api/internal/shared/claude"
-	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
-	"github.com/Wei-Shaw/sub2api/internal/shared/openai_compat"
-	"github.com/Wei-Shaw/sub2api/internal/shared/responseheaders"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/apicompat"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/claude"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/logger"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/openai_compat"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/responseheaders"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
@@ -49,6 +49,11 @@ func (s *OpenAIGatewayService) ForwardAsAnthropic(
 	promptCacheKey string,
 	defaultMappedModel string,
 ) (*OpenAIForwardResult, error) {
+	if sanitized, changed, err := sanitizeOpenAIResponsesToolParameterTypes(body); err != nil {
+		return nil, err
+	} else if changed {
+		body = sanitized
+	}
 	rememberOpenCodeInboundBody(c, body)
 	distillation := s.IsDistillationGroupRequest(c, account)
 	if distillation {

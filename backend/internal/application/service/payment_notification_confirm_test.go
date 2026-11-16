@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/ent/paymentauditlog"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/paymentauditlog"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment"
 	"github.com/stretchr/testify/require"
 )
 
@@ -119,7 +119,11 @@ func TestVerifiedPaymentConfirmsOnlyLocallyPayableOrders(t *testing.T) {
 			ctx := context.Background()
 			client := newPaymentConfigServiceTestClient(t)
 			order := createCompletedRefundableOrderForTest(t, ctx, client, "notification-local-check")
-			_, err := client.PaymentOrder.UpdateOneID(order.ID).SetStatus(tc.status).Save(ctx)
+			update := client.PaymentOrder.UpdateOneID(order.ID).SetStatus(tc.status)
+			if tc.status == OrderStatusPending {
+				update.ClearPaidAt()
+			}
+			_, err := update.Save(ctx)
 			require.NoError(t, err)
 			calls := 0
 			prov := paymentConfirmTestProvider{

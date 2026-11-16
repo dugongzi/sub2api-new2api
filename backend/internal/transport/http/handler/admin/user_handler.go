@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/shared/response"
-	"github.com/Wei-Shaw/sub2api/internal/transport/http/handler/dto"
-	"github.com/Wei-Shaw/sub2api/internal/transport/http/handler/quotaview"
-	"github.com/Wei-Shaw/sub2api/internal/transport/http/server/middleware"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/response"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/transport/http/handler/dto"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/transport/http/handler/quotaview"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/transport/http/server/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -523,7 +523,7 @@ func (h *UserHandler) GetBalanceHistory(c *gin.Context) {
 	// Convert to admin DTO (includes notes field for admin visibility)
 	out := make([]dto.AdminRedeemCode, 0, len(codes))
 	for i := range codes {
-		out = append(out, *dto.RedeemCodeFromServiceAdmin(&codes[i]))
+		out = append(out, *adminRedeemCodeForRequest(c, &codes[i]))
 	}
 
 	// Custom response with total_recharged alongside pagination

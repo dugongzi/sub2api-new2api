@@ -9,16 +9,21 @@ import (
 	"strconv"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentauditlog"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/paymentauditlog"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/paymentorder"
 )
 
 // --- Dashboard & Analytics ---
 
+const MaxPaymentDashboardDays = 366
+
 func (s *PaymentService) GetDashboardStats(ctx context.Context, days int) (*DashboardStats, error) {
 	if days <= 0 {
 		days = 30
+	}
+	if days > MaxPaymentDashboardDays {
+		days = MaxPaymentDashboardDays
 	}
 	now := time.Now()
 	since := now.AddDate(0, 0, -days)

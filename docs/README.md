@@ -49,11 +49,13 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [历史上游差异当前台账](UPSTREAM_DEFERRED_STATUS.md) | 198 个历史暂缓/部分项的当前决策、54 项适配、重复关闭、明确未采用范围和 Docker 验证 |
 | [上游主线同步审查（2026-11-12）](UPSTREAM_SYNC_20261112.md) | 33 个冻结 PR 的关闭台账、性能、索引升级回退与专项边界 |
 | [TypeSafe 与充值阶梯专项适配](UPSTREAM_ADAPT_20261006.md) | 原生协议、计费探测、优惠快照、升级回退和验证 |
 | [组合分组](COMPOSITE_GROUPS.md) | Composite group 的平台解析和使用约束 |
 | [Excel BPS 与 DeepSeek 兼容](BPS_DEEPSEEK_COMPAT.md) | 账号级 BPS 开关/筛选/批量更新、Responses 与 Chat Completions 兼容入口 |
 | [Codex OAuth 模拟的有意差异](codex/intentional-divergences.md) | 固定 Codex 源码 revision、纯 Go A/B 身份与 continuation 边界、暂缓的传输层差异 |
+| [OAuth 证明与 Lenovo 归因（2026-11-15）](codex/oauth-device-requests-20261115.md) | 独立网关开关、账号持久安装身份、204 响应规则、CAS 租约与重启/升级边界 |
 | [OpenAI OAuth 与 Codex 桌面请求对照](codex/desktop-request-alignment.md) | 桌面静态报告的端点边界、OAuth principal 校验、HTTP 媒体类型与证明字段归属 |
 | [Codex 桌面深度报告与请求还原补充](codex/ChatGPT_Codex_桌面端_深度分析报告_请求还原补充.md) | 完整头部清单、逐端点模板、真实值来源、bundle 证据与项目待补齐字段 |
 | [Ghidra 原生证明与设备密钥对照](codex/native-device-key-alignment.md) | TPM/SE native 桥、controller step-up 与签名 challenge、CBOR 和静态报告校正 |
@@ -110,6 +112,7 @@
 | [Codex 间歇性 400 与请求压缩诊断](../diagnostics/issue-8636-20261112/README.md) | Issue #8636 的 zstd 线索、Docker 对照、账号级开关与诊断边界 |
 | [保留 zstd 的 Codex 400 恢复](../diagnostics/issue-8636-fix-20261113/README.md) | 默认压缩继续启用、精确错误分类、请求级单次恢复及 Docker 结算验证 |
 | [HTTP 200 流内失败与断流恢复](../diagnostics/http200-stream-20261113/README.md) | Codex 通用错误信封、单账号恢复、失败终态、残留正文及编码组合的 Docker 验证 |
+| [2026-11-14 OAuth 请求与压缩对齐](../diagnostics/oauth-alignment-20261114/README.md) | 对照桌面报告核验 OAuth 身份、最终 zstd 请求字节、响应解压和四阶段 Docker 回滚 |
 
 
 ## 长期优化计划

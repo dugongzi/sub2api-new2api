@@ -14,9 +14,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/apicompat"
-	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
-	"github.com/Wei-Shaw/sub2api/internal/shared/responseheaders"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/apicompat"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/logger"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/responseheaders"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -475,6 +475,19 @@ func (s *OpenAIGatewayService) handleStreamingResponseWithReasoning(ctx context.
 			msg := "OpenAI stream disconnected before completion"
 			if errText := strings.TrimSpace(scanErr.Error()); errText != "" {
 				msg += ": " + errText
+			}
+			// req/v3's experimental client used to impose a 120-second total
+			// timeout on the whole HTTP exchange. A body-read timeout with a
+			// live parent request is an upstream transport failure, not a client
+			// disconnect. Retry it only when the immutable request passed the
+			// replay-safety gate; the outer handler/bridge owns the bounded
+			// same-account and account failover budgets.
+			if (ctx == nil || ctx.Err() == nil) &&
+				isOpenAITransportTimeout(scanErr) &&
+				!IsOpenAIStreamResponseHeaderTimeout(scanErr) &&
+				openAIStreamReplaySafe(c) {
+				markOpenAITransportTimeoutPending(c)
+				return resultWithUsage(), s.newRetryableOpenAIStreamFailoverError(c, account, false, upstreamRequestID, nil, msg), true
 			}
 			return resultWithUsage(), s.newOpenAIStreamFailoverError(c, account, false, upstreamRequestID, nil, msg), true
 		}

@@ -11,12 +11,13 @@ import (
 	"strings"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment/provider"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
-	"github.com/Wei-Shaw/sub2api/internal/shared/servertiming"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/paymentorder"
+	dbuser "github.com/DR-lin-eng/sub2api-no2api/ent/user"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment/provider"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/servertiming"
 	"github.com/shopspring/decimal"
 )
 
@@ -36,6 +37,9 @@ func (s *PaymentService) CreateOrder(ctx context.Context, req CreateOrderRequest
 	if !cfg.Enabled {
 		return nil, infraerrors.Forbidden("PAYMENT_DISABLED", "payment system is disabled")
 	}
+	// Method availability follows enabled provider instances and their supported
+	// types, as checkout-info and the current admin UI do. Legacy visible-method
+	// flags defaulted to false and are no longer payment controls.
 	plan, err := s.validateOrderInput(ctx, req, cfg)
 	if err != nil {
 		return nil, err
@@ -111,9 +115,7 @@ func (s *PaymentService) CreateOrder(ctx context.Context, req CreateOrderRequest
 	}
 	resp, err := s.invokeProvider(ctx, order, req, cfg, limitAmount, payAmountStr, payAmount, plan, sel)
 	if err != nil {
-		_, _ = s.entClient.PaymentOrder.UpdateOneID(order.ID).
-			SetStatus(OrderStatusFailed).
-			Save(ctx)
+		s.markPaymentCreationFailed(ctx, order.ID)
 		return nil, err
 	}
 	return resp, nil
@@ -165,10 +167,19 @@ func (s *PaymentService) createOrderInTx(ctx context.Context, req CreateOrderReq
 		return nil, fmt.Errorf("begin transaction: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
+	// Serialize reservations for one user across application instances.
+	if s.entClient.Driver().Dialect() == "postgres" {
+		if _, err := tx.User.Query().Where(dbuser.IDEQ(req.UserID)).ForUpdate().Only(ctx); err != nil {
+			return nil, fmt.Errorf("lock checkout budget: %w", err)
+		}
+	}
 	if err := s.checkPendingLimit(ctx, tx, req.UserID, cfg.MaxPendingOrders); err != nil {
 		return nil, err
 	}
 	if err := s.checkDailyLimit(ctx, tx, req.UserID, limitAmount, cfg.DailyLimit); err != nil {
+		return nil, err
+	}
+	if err := s.reserveProviderBudget(ctx, tx, sel, req.PaymentType, payAmount); err != nil {
 		return nil, err
 	}
 	tm := cfg.OrderTimeoutMin
@@ -181,6 +192,9 @@ func (s *PaymentService) createOrderInTx(ctx context.Context, req CreateOrderReq
 		return nil, err
 	}
 	providerSnapshot := buildPaymentOrderProviderSnapshot(sel, req)
+	if providerSnapshot != nil {
+		providerSnapshot[payment.QuotedPayAmountSnapshotKey] = payAmount
+	}
 	selectedInstanceID := ""
 	selectedProviderKey := ""
 	if sel != nil {
@@ -338,7 +352,14 @@ func (s *PaymentService) checkDailyLimit(ctx context.Context, tx *dbent.Tx, user
 		return nil
 	}
 	ts := psStartOfDayUTC(time.Now())
-	orders, err := tx.PaymentOrder.Query().Where(paymentorder.UserIDEQ(userID), paymentorder.StatusIn(OrderStatusPaid, OrderStatusRecharging, OrderStatusCompleted), paymentorder.PaidAtGTE(ts)).All(ctx)
+	now := time.Now()
+	orders, err := tx.PaymentOrder.Query().Where(
+		paymentorder.UserIDEQ(userID),
+		paymentorder.Or(
+			paymentorder.And(paymentorder.PaidAtGTE(ts), paymentorder.StatusNotIn(OrderStatusRefunded, OrderStatusPartiallyRefunded)),
+			paymentorder.And(paymentorder.PaidAtIsNil(), paymentorder.StatusIn(OrderStatusPending, OrderStatusExpired, OrderStatusCancelled, OrderStatusFailed), paymentorder.ExpiresAtGTE(now.Add(-paymentRecoveryWindow))),
+		),
+	).All(ctx)
 	if err != nil {
 		return fmt.Errorf("query daily usage: %w", err)
 	}
@@ -468,16 +489,12 @@ func (s *PaymentService) invokeProvider(ctx context.Context, order *dbent.Paymen
 		}
 		return nil, classifyCreatePaymentError(req, sel.ProviderKey, err)
 	}
+	if pr == nil {
+		return nil, errors.New("payment provider returned an empty create response")
+	}
 	sanitizeCreatePaymentResponseDetails(pr)
-	_, err = s.entClient.PaymentOrder.UpdateOneID(order.ID).
-		SetNillablePaymentTradeNo(psNilIfEmpty(pr.TradeNo)).
-		SetNillablePayURL(psNilIfEmpty(pr.PayURL)).
-		SetNillableQrCode(psNilIfEmpty(pr.QRCode)).
-		SetNillableProviderInstanceID(psNilIfEmpty(sel.InstanceID)).
-		SetNillableProviderKey(psNilIfEmpty(sel.ProviderKey)).
-		Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update order with payment details: %w", err)
+	if err := s.savePaymentCreationDetails(ctx, order.ID, pr); err != nil {
+		return nil, err
 	}
 	s.writeAuditLog(ctx, order.ID, "ORDER_CREATED", fmt.Sprintf("user:%d", req.UserID), map[string]any{
 		"paymentAmount":  req.Amount,

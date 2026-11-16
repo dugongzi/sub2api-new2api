@@ -3,7 +3,7 @@ package service
 import (
 	"net/http"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/tlsfingerprint"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/tlsfingerprint"
 )
 
 // SetTLSFingerprintProfileService attaches the shared account Profile resolver
@@ -58,6 +58,11 @@ func (s *OpenAIGatewayService) doAccountHTTPUpstream(
 			return nil, err
 		}
 		if err := s.attachDesktopDeviceCheck(req, account, owner); err != nil {
+			return nil, err
+		}
+	}
+	if req != nil {
+		if err := checkOpenAIRequestCurrent(req.Context()); err != nil {
 			return nil, err
 		}
 	}
