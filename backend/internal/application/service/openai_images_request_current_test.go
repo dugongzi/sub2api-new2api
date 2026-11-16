@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/modules/chatgptimages"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/chatgptimages"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +37,7 @@ func TestChatGPTAppImagesRejectStalePrepare(t *testing.T) {
 				repo.account.Credentials["chatgpt_account_id"] = "another-workspace"
 			}
 			svc, upstream := newChatGPTAppImageTestServiceWithPrepare(t, func(w http.ResponseWriter, r *http.Request) {
-				require.Contains(t, r.UserAgent(), "Codex Desktop/26.1106.51428")
+				require.Contains(t, r.UserAgent(), "Codex Desktop/26.1111.21308")
 				if stage == "after_prepare" {
 					changePrincipal()
 				}

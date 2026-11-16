@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/grouproutingscheme"
-	"github.com/Wei-Shaw/sub2api/ent/grouproutingschemeitem"
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/domain"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/grouproutingscheme"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/grouproutingschemeitem"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/domain"
 )
 
 type routingSchemeRepository struct {

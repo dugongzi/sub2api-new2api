@@ -14,8 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
-	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/logger"
 	"github.com/tidwall/gjson"
 	"golang.org/x/sync/singleflight"
 )
@@ -1150,6 +1150,12 @@ func (s *RateLimitService) handle403(ctx context.Context, account *Account, upst
 	}
 	if isKimiConcurrencyLimit403(account, upstreamMsg) {
 		s.apply429FallbackRateLimit(ctx, account, "cn_concurrency_limit")
+		return false
+	}
+	if isCodingPlanQuotaExhausted403(account, responseBody, upstreamMsg) {
+		if !s.cooldownCodingPlanQuotaSnapshot(ctx, account) {
+			s.apply429FallbackRateLimit(ctx, account, "cn_quota_exhausted")
+		}
 		return false
 	}
 	if account.Platform == PlatformAntigravity {

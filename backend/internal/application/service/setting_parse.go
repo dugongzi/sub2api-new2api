@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
-	"github.com/Wei-Shaw/sub2api/internal/shared/ip"
-	"github.com/Wei-Shaw/sub2api/internal/shared/openai"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/ip"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/openai"
 )
 
 // InitializeDefaultSettings 初始化默认设置
@@ -270,6 +270,8 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyOpenAIVisibleOutputTTFTEnabled:                     "true",
 		SettingKeyOpenAIOAuthForceRelayEnabled:                       "false",
 		SettingKeyOpenAIOAuthForceRelayBaseURL:                       DefaultOpenAIOAuthForceRelayBaseURL,
+		SettingKeyOpenAIOAuthAttestationEnabled:                      strconv.FormatBool(s.defaultOpenAIOAuthAttestationEnabled()),
+		SettingKeyOpenAILenovoAttributionEnabled:                     "false",
 		SettingKeyEnableAnthropicCacheTTL1hInjection:                 "false",
 		SettingKeyRewriteMessageCacheControl:                         strconv.FormatBool(s.defaultRewriteMessageCacheControl()),
 		SettingKeyEnableClientDatelineNormalization:                  "true",
@@ -280,8 +282,6 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyOpenAICodexVersionAutoSyncEnabled:                  "true",
 		SettingPaymentVisibleMethodAlipaySource:                      "",
 		SettingPaymentVisibleMethodWxpaySource:                       "",
-		SettingPaymentVisibleMethodAlipayEnabled:                     "false",
-		SettingPaymentVisibleMethodWxpayEnabled:                      "false",
 		SettingKeyOpenAIContentSessionBurstBalanceEnabled:            "false",
 		SettingKeyOpenAISessionIDRateLimitEnabled:                    "false",
 		SettingKeyOpenAISessionIDRateLimitPerMinute:                  "0",
@@ -384,8 +384,7 @@ func isFalseSettingValue(value string) bool {
 	}
 }
 
-func normalizeVisibleMethodSettingSource(method, source string, enabled bool) (string, error) {
-	_ = enabled
+func normalizeVisibleMethodSettingSource(method, source string) (string, error) {
 	source = strings.TrimSpace(source)
 	if source == "" {
 		return "", nil

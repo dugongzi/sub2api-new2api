@@ -7,12 +7,14 @@ import (
 	"maps"
 	"strings"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
 	"github.com/lib/pq"
 )
 
 func (r *accountRepository) UpdateExtra(ctx context.Context, id int64, updates map[string]any) error {
+	updates = maps.Clone(updates)
+	delete(updates, "openai_lenovo_attribution")
 	if len(updates) == 0 {
 		return nil
 	}
@@ -312,6 +314,7 @@ func (r *accountRepository) BulkUpdate(ctx context.Context, ids []int64, updates
 
 	// Generic extra patches must not bypass the typed eligibility check.
 	updates.Extra = maps.Clone(updates.Extra)
+	delete(updates.Extra, "openai_lenovo_attribution")
 	delete(updates.Extra, service.ExcelBPSEnabledExtraKey)
 	delete(updates.Extra, "openai_excel_bps")
 	if updates.ExcelBPSEnabled != nil {

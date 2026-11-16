@@ -17,15 +17,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
-	"github.com/Wei-Shaw/sub2api/internal/shared/apicompat"
-	"github.com/Wei-Shaw/sub2api/internal/shared/ctxkey"
-	"github.com/Wei-Shaw/sub2api/internal/shared/gemini"
-	"github.com/Wei-Shaw/sub2api/internal/shared/geminicli"
-	"github.com/Wei-Shaw/sub2api/internal/shared/googleapi"
-	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
-	"github.com/Wei-Shaw/sub2api/internal/shared/responseheaders"
-	"github.com/Wei-Shaw/sub2api/internal/shared/urlvalidator"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/apicompat"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/ctxkey"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/gemini"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/geminicli"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/googleapi"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/logger"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/responseheaders"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/urlvalidator"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
@@ -2681,6 +2681,9 @@ func ParseGeminiRateLimitResetTime(body []byte) *int64 {
 	}
 
 	// 遍历 error.details 查找 quotaResetDelay
+	if reset := geminiRetryInfoResetTime(body); reset != nil {
+		return reset
+	}
 	var found *int64
 	gjson.GetBytes(body, "error.details").ForEach(func(_, detail gjson.Result) bool {
 		v := detail.Get("metadata.quotaResetDelay").String()

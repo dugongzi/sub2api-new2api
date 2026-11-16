@@ -1,6 +1,6 @@
 package admin
 
-import "github.com/Wei-Shaw/sub2api/internal/application/service"
+import "github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
 
 func appendRuntimeSettingChanges(changed []string, before, after *service.SystemSettings) []string {
 	if before.ImageIndependentSchedulingEnabled != after.ImageIndependentSchedulingEnabled {
@@ -92,6 +92,12 @@ func appendRuntimeSettingChanges(changed []string, before, after *service.System
 	}
 	if before.OpenAIVisibleOutputTTFTEnabled != after.OpenAIVisibleOutputTTFTEnabled {
 		changed = append(changed, "openai_visible_output_ttft_enabled")
+	}
+	if before.OpenAIOAuthAttestationEnabled != after.OpenAIOAuthAttestationEnabled {
+		changed = append(changed, "openai_oauth_attestation_enabled")
+	}
+	if before.OpenAILenovoAttributionEnabled != after.OpenAILenovoAttributionEnabled {
+		changed = append(changed, "openai_lenovo_attribution_enabled")
 	}
 	if before.PurchaseSubscriptionEnabled != after.PurchaseSubscriptionEnabled {
 		changed = append(changed, "purchase_subscription_enabled")

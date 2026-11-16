@@ -1,8 +1,8 @@
 package admin
 
 import (
-	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/transport/http/handler/dto"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/transport/http/handler/dto"
 )
 
 func buildSettingsUpdateResponsePayload(
@@ -195,6 +195,8 @@ func buildSettingsUpdateResponsePayload(
 		OpenAIRequestTimezoneEnabled:                           updatedSettings.OpenAIRequestTimezoneEnabled,
 		ImageIndependentSchedulingEnabled:                      updatedSettings.ImageIndependentSchedulingEnabled,
 		OpenAIImagesLegacyEnabled:                              updatedSettings.OpenAIImagesLegacyEnabled,
+		OpenAIOAuthAttestationEnabled:                          updatedSettings.OpenAIOAuthAttestationEnabled,
+		OpenAILenovoAttributionEnabled:                         updatedSettings.OpenAILenovoAttributionEnabled,
 		OpenAIRequestTimezone:                                  updatedSettings.OpenAIRequestTimezone,
 		OpenAILocationEnabled:                                  updatedSettings.OpenAILocationEnabled,
 		OpenAILocationLatitude:                                 updatedSettings.OpenAILocationLatitude,

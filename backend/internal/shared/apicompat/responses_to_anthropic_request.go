@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/claude"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/claude"
 )
 
 // ResponsesToAnthropicRequest converts a Responses API request into an
@@ -751,6 +751,9 @@ func normalizeAnthropicInputSchema(schema json.RawMessage) json.RawMessage {
 	var m map[string]json.RawMessage
 	if err := json.Unmarshal(schema, &m); err != nil {
 		return json.RawMessage(`{"type":"object","properties":{}}`)
+	}
+	if !flattenAnthropicRootUnions(m) {
+		return schema
 	}
 
 	typeRaw, ok := m["type"]

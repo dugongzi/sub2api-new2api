@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/Wei-Shaw/sub2api/internal/domain"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/domain"
 )
 
 const (

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/antigravity"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/antigravity"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
 )
 
 // OmittedSettingKeys marks setting keys the caller's payload never carried.
@@ -284,6 +284,7 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 	s.streamModePerformanceLoaded.Store(time.Now().UnixNano())
 	s.openAIWSModeRouterV2Enabled.Store(settings.OpenAIWSModeRouterV2Enabled)
 	s.openAIWSModeRouterV2Loaded.Store(time.Now().UnixNano())
+	s.refreshOpenAIAuxiliarySettings(settings)
 	s.refreshOpenAIRequestTimezoneSettings(settings)
 	s.refreshOpenAILocationSettings(settings)
 	s.refreshOpenAIImagesMode(settings.OpenAIImagesLegacyEnabled)
@@ -318,7 +319,7 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 		expiresAt: time.Now().Add(antigravityUserAgentVersionCacheTTL).UnixNano(),
 	})
 	s.openAICodexUASF.Forget("openai_codex_user_agent")
-	codexUA := strings.TrimSpace(settings.OpenAICodexUserAgent)
+	codexUA := strings.Trim(settings.OpenAICodexUserAgent, " \t")
 	s.openAICodexUACache.Store(&cachedOpenAICodexUserAgent{
 		value:     codexUA,
 		expiresAt: time.Now().Add(openAICodexUserAgentCacheTTL).UnixNano(),

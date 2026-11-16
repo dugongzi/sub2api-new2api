@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
-	dbuser "github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment/provider"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
-	"github.com/Wei-Shaw/sub2api/internal/shared/servertiming"
+	dbent "github.com/DR-lin-eng/sub2api-no2api/ent"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/paymentorder"
+	dbuser "github.com/DR-lin-eng/sub2api-no2api/ent/user"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/modules/payment/provider"
+	infraerrors "github.com/DR-lin-eng/sub2api-no2api/internal/shared/errors"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/servertiming"
 	"github.com/shopspring/decimal"
 )
 
@@ -37,15 +37,9 @@ func (s *PaymentService) CreateOrder(ctx context.Context, req CreateOrderRequest
 	if !cfg.Enabled {
 		return nil, infraerrors.Forbidden("PAYMENT_DISABLED", "payment system is disabled")
 	}
-	if key := visibleMethodEnabledSettingKey(req.PaymentType); key != "" && s.configService.settingRepo != nil {
-		value, err := s.configService.settingRepo.GetValue(ctx, key)
-		if err != nil && !errors.Is(err, ErrSettingNotFound) {
-			return nil, fmt.Errorf("get payment method status: %w", err)
-		}
-		if value == "false" {
-			return nil, infraerrors.Forbidden("PAYMENT_DISABLED", "payment method is disabled")
-		}
-	}
+	// Method availability follows enabled provider instances and their supported
+	// types, as checkout-info and the current admin UI do. Legacy visible-method
+	// flags defaulted to false and are no longer payment controls.
 	plan, err := s.validateOrderInput(ctx, req, cfg)
 	if err != nil {
 		return nil, err

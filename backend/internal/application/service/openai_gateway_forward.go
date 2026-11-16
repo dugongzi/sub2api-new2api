@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/shared/apicompat"
-	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
-	"github.com/Wei-Shaw/sub2api/internal/shared/openai"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/apicompat"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/logger"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/shared/openai"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -27,12 +27,7 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 	}
 	integrityOriginalBody := s.captureOpenAIRequestIntegritySnapshot(ctx, account, body)
 	body = s.normalizeOpenAIRequestTimezone(ctx, account, body, "http")
-	ctx = s.WithOpenAIStreamRuntimeSettings(ctx)
-	if c != nil && c.Request != nil {
-		settings := s.openAIStreamRuntimeSettings(ctx)
-		requestCtx := context.WithValue(c.Request.Context(), openAIStreamRuntimeSettingsContextKey{}, settings)
-		c.Request = c.Request.WithContext(requestCtx)
-	}
+	ctx = s.withOpenAIStreamRuntimeSettingsForRequest(ctx, c)
 	beginAccountUpstreamResponseModelObservation(c, account)
 	beginOpenAITimingObservation(c)
 	ClearActualOpenAIUpstreamEndpoint(c)

@@ -12,6 +12,7 @@
 | `gateway_systemone.go`, `account_test_service_typesafe.go` | TypeSafe 原生非流式转发与账号测试，复用完整账号出口和可靠计费 |
 | `openai*` | OpenAI/Codex/Responses/Images/WS 管线 |
 | `openai_images_chatgpt*`, `setting_openai_images_mode.go` | 默认 App 生图与验证、上传/下载、SSE/topic 恢复和旧版回退；见 [协议与开关](../../../../docs/CHATGPT_APP_IMAGES.md) |
+| `openai_lenovo_attribution.go`, `setting_openai_auxiliary.go` | 独立 OAuth 证明/Lenovo 开关、账号持久归因 CAS 与有界后台获取；见 [设备请求](../../../../docs/codex/oauth-device-requests-20261115.md) |
 | `openai_oauth_auth_context.go` | OAuth 个人/工作区套餐连续性、access-token exp 与凭据期限；见 [桌面请求对照](../../../../docs/codex/desktop-request-alignment.md) |
 | `openai_usage*` | OAuth 调用触发的后台额度 WS、10 分钟活跃窗口、快照校验、详细用量与缓存；见 [用量说明](../../../../docs/OPENAI_USAGE.md) |
 | `openai_request_set_patches.go` | 大 JSON 的多项普通 set 局部改写与一次拼接，保留 sjson 回退路径 |
@@ -28,7 +29,7 @@
 | `scheduler*`, `channel*`, `ratelimit*`, `concurrency*` | 调度、通道和并发控制 |
 | `billing*`, `usage*`, `pricing*`, `subscription*` | 计费、用量和订阅 |
 | `media_studio*`, `model_attribute*`, `multimodal_media*`, `video_balance_hold*` | 媒体配置/预估、编译模板属性、有界媒体协议与视频冻结编排；浏览器历史不入服务端存储 |
-| `payment*`, `batch_image*` | 支付应用编排与批量图片任务 |
+| `payment*`, `batch_image*` | 支付应用编排与批量图片任务；支付方式启停统一依据服务商实例和支持类型，见 [支付配置](../../../../docs/PAYMENT_CN.md) |
 | `ops*`, `audit*`, `content_moderation*` | 运维、审计和内容策略 |
 | `setting*`, `notification*`, `backup*` | 配置、通知和维护用例 |
 | `proxy_auto_assignment*`, `proxy_health*` | 代理池强制均衡分配、定期测活和失活迁移 |

@@ -10,9 +10,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Wei-Shaw/sub2api/ent/grouproutingscheme"
-	"github.com/Wei-Shaw/sub2api/ent/grouproutingschemeitem"
-	"github.com/Wei-Shaw/sub2api/internal/domain"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/grouproutingscheme"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/grouproutingschemeitem"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/domain"
 )
 
 // GroupRoutingSchemeItem is the model entity for the GroupRoutingSchemeItem schema.

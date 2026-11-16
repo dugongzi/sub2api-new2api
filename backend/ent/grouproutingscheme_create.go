@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/grouproutingscheme"
-	"github.com/Wei-Shaw/sub2api/ent/grouproutingschemeitem"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/grouproutingscheme"
+	"github.com/DR-lin-eng/sub2api-no2api/ent/grouproutingschemeitem"
 )
 
 // GroupRoutingSchemeCreate is the builder for creating a GroupRoutingScheme entity.
