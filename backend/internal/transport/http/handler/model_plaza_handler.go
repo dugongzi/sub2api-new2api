@@ -40,19 +40,41 @@ func NewModelPlazaHandler(
 
 // modelPlazaOfficialPricing LiteLLM 官方参考价（USD per token）。
 type modelPlazaOfficialPricing struct {
-	InputPrice        *float64 `json:"input_price"`
-	OutputPrice       *float64 `json:"output_price"`
-	CacheWritePrice   *float64 `json:"cache_write_price"`
-	CacheWrite1hPrice *float64 `json:"cache_write_1h_price,omitempty"`
-	CacheReadPrice    *float64 `json:"cache_read_price"`
+	InputPrice         *float64 `json:"input_price"`
+	OutputPrice        *float64 `json:"output_price"`
+	CacheWritePrice    *float64 `json:"cache_write_price"`
+	CacheWrite1hPrice  *float64 `json:"cache_write_1h_price,omitempty"`
+	CacheWrite12hPrice *float64 `json:"cache_write_12h_price,omitempty"`
+	CacheReadPrice     *float64 `json:"cache_read_price"`
+	// Intervals 官方长上下文阶梯，仅多档模型给出。
+	Intervals []userPricingIntervalDTO `json:"intervals,omitempty"`
 }
 
-// modelPlazaModel 广场模型条目：渠道定价（白名单形态）+ 官方参考价。
+// modelPlazaTimePricingPeriod 分时倍率时段（配置时区当天 [start, end)）。
+type modelPlazaTimePricingPeriod struct {
+	StartTime  string  `json:"start_time"`
+	EndTime    string  `json:"end_time"`
+	Multiplier float64 `json:"multiplier"`
+}
+
+// modelPlazaTimePricing 计费会生效的分时倍率（仅倍率 ≠ 1 的时段）。
+// WeekdaysOnly 为 true 时时段仅周一至周五生效，周末整天按标准价计费。
+type modelPlazaTimePricing struct {
+	Timezone     string                        `json:"timezone"`
+	WeekdaysOnly bool                          `json:"weekdays_only,omitempty"`
+	Periods      []modelPlazaTimePricingPeriod `json:"periods"`
+}
+
+// modelPlazaModel 广场模型条目：实收口径展示定价（白名单形态）+ 官方参考价。
 type modelPlazaModel struct {
 	Name            string                     `json:"name"`
 	Platform        string                     `json:"platform"`
 	Pricing         *userSupportedModelPricing `json:"pricing"`
 	OfficialPricing *modelPlazaOfficialPricing `json:"official_pricing"`
+	// LongContextBasis 多档时的计价基准："whole_request"（整单按档）| "marginal"（仅超出部分）。
+	LongContextBasis string `json:"long_context_basis,omitempty"`
+	// TimePricing 分时倍率时段，落在时段内的请求整单乘倍率；无分时省略。
+	TimePricing *modelPlazaTimePricing `json:"time_pricing,omitempty"`
 }
 
 // modelPlazaGroup 广场分组条目（白名单字段）。
@@ -73,7 +95,9 @@ type modelPlazaGroup struct {
 	ImageRateMultiplier  float64           `json:"image_rate_multiplier"`
 	VideoRateIndependent bool              `json:"video_rate_independent"`
 	VideoRateMultiplier  float64           `json:"video_rate_multiplier"`
-	Models               []modelPlazaModel `json:"models"`
+	// 分组是否启用长上下文阶梯计费；关闭时模型实付列只展示最低档/基础价。
+	LongContextPricingEnabled bool              `json:"long_context_pricing_enabled"`
+	Models                    []modelPlazaModel `json:"models"`
 }
 
 // modelPlazaResponse 广场页响应。
@@ -177,34 +201,53 @@ func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) mo
 	for i := range g.Models {
 		m := &g.Models[i]
 		models = append(models, modelPlazaModel{
-			Name:            m.Name,
-			Platform:        m.Platform,
-			Pricing:         toUserPricing(m.Pricing),
-			OfficialPricing: toModelPlazaOfficialPricing(m.OfficialPricing),
+			Name:             m.Name,
+			Platform:         m.Platform,
+			Pricing:          toUserPricing(m.Pricing),
+			OfficialPricing:  toModelPlazaOfficialPricing(m.OfficialPricing),
+			LongContextBasis: string(m.LongContextBasis),
+			TimePricing:      toModelPlazaTimePricing(m.TimePricing),
 		})
 	}
 	dto := modelPlazaGroup{
-		ID:                   g.ID,
-		Name:                 g.Name,
-		Description:          g.Description,
-		Platform:             g.Platform,
-		SubscriptionType:     g.SubscriptionType,
-		RateMultiplier:       g.RateMultiplier,
-		PeakRateEnabled:      g.PeakRateEnabled,
-		PeakStart:            g.PeakStart,
-		PeakEnd:              g.PeakEnd,
-		PeakRateMultiplier:   g.PeakRateMultiplier,
-		IsExclusive:          g.IsExclusive,
-		ImageRateIndependent: g.ImageRateIndependent,
-		ImageRateMultiplier:  g.ImageRateMultiplier,
-		VideoRateIndependent: g.VideoRateIndependent,
-		VideoRateMultiplier:  g.VideoRateMultiplier,
-		Models:               models,
+		ID:                        g.ID,
+		Name:                      g.Name,
+		Description:               g.Description,
+		Platform:                  g.Platform,
+		SubscriptionType:          g.SubscriptionType,
+		RateMultiplier:            g.RateMultiplier,
+		PeakRateEnabled:           g.PeakRateEnabled,
+		PeakStart:                 g.PeakStart,
+		PeakEnd:                   g.PeakEnd,
+		PeakRateMultiplier:        g.PeakRateMultiplier,
+		IsExclusive:               g.IsExclusive,
+		ImageRateIndependent:      g.ImageRateIndependent,
+		ImageRateMultiplier:       g.ImageRateMultiplier,
+		VideoRateIndependent:      g.VideoRateIndependent,
+		VideoRateMultiplier:       g.VideoRateMultiplier,
+		LongContextPricingEnabled: g.LongContextPricingEnabled,
+		Models:                    models,
 	}
 	if rate, ok := userRates[g.ID]; ok {
 		dto.UserRateMultiplier = &rate
 	}
 	return dto
+}
+
+// toModelPlazaTimePricing 转换分时倍率；nil 透传（JSON 省略）。
+func toModelPlazaTimePricing(p *service.TimePricingSchedule) *modelPlazaTimePricing {
+	if p == nil || len(p.Periods) == 0 {
+		return nil
+	}
+	periods := make([]modelPlazaTimePricingPeriod, 0, len(p.Periods))
+	for _, period := range p.Periods {
+		periods = append(periods, modelPlazaTimePricingPeriod{
+			StartTime:  period.StartTime,
+			EndTime:    period.EndTime,
+			Multiplier: period.Multiplier,
+		})
+	}
+	return &modelPlazaTimePricing{Timezone: p.Timezone, WeekdaysOnly: p.WeekdaysOnly, Periods: periods}
 }
 
 // toModelPlazaOfficialPricing 转换官方参考价；nil 透传（前端显示 "-"）。
@@ -213,10 +256,12 @@ func toModelPlazaOfficialPricing(p *service.PlazaOfficialPricing) *modelPlazaOff
 		return nil
 	}
 	return &modelPlazaOfficialPricing{
-		InputPrice:        p.InputPrice,
-		OutputPrice:       p.OutputPrice,
-		CacheWritePrice:   p.CacheWritePrice,
-		CacheWrite1hPrice: p.CacheWrite1hPrice,
-		CacheReadPrice:    p.CacheReadPrice,
+		InputPrice:         p.InputPrice,
+		OutputPrice:        p.OutputPrice,
+		CacheWritePrice:    p.CacheWritePrice,
+		CacheWrite1hPrice:  p.CacheWrite1hPrice,
+		CacheWrite12hPrice: p.CacheWrite12hPrice,
+		CacheReadPrice:     p.CacheReadPrice,
+		Intervals:          toUserPricingIntervals(p.Intervals),
 	}
 }
