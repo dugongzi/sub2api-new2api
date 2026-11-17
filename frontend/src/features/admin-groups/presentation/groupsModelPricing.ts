@@ -13,6 +13,8 @@ export interface GroupPricingIntervalFormEntry {
   input_price: number | string | null;
   output_price: number | string | null;
   cache_write_price: number | string | null;
+  cache_write_1h_price: number | string | null;
+  cache_write_12h_price: number | string | null;
   cache_read_price: number | string | null;
   per_request_price: number | string | null;
   sort_order: number;
@@ -24,6 +26,8 @@ export interface GroupPricingFormEntry {
   input_price: number | string | null;
   output_price: number | string | null;
   cache_write_price: number | string | null;
+  cache_write_1h_price: number | string | null;
+  cache_write_12h_price: number | string | null;
   cache_read_price: number | string | null;
   image_input_price: number | string | null;
   image_output_price: number | string | null;
@@ -62,6 +66,8 @@ const intervalFromAPI = (
   input_price: perTokenToMTok(interval.input_price),
   output_price: perTokenToMTok(interval.output_price),
   cache_write_price: perTokenToMTok(interval.cache_write_price),
+  cache_write_1h_price: perTokenToMTok(interval.cache_write_1h_price),
+  cache_write_12h_price: perTokenToMTok(interval.cache_write_12h_price),
   cache_read_price: perTokenToMTok(interval.cache_read_price),
   per_request_price: interval.per_request_price,
   sort_order: interval.sort_order,
@@ -76,6 +82,8 @@ const intervalToAPI = (
   input_price: mTokToPerToken(interval.input_price),
   output_price: mTokToPerToken(interval.output_price),
   cache_write_price: mTokToPerToken(interval.cache_write_price),
+  cache_write_1h_price: mTokToPerToken(interval.cache_write_1h_price),
+  cache_write_12h_price: mTokToPerToken(interval.cache_write_12h_price),
   cache_read_price: mTokToPerToken(interval.cache_read_price),
   per_request_price: toNullableNumber(interval.per_request_price),
   sort_order: interval.sort_order,
@@ -87,6 +95,8 @@ export const createGroupPricingEntry = (): GroupPricingFormEntry => ({
   input_price: null,
   output_price: null,
   cache_write_price: null,
+  cache_write_1h_price: null,
+  cache_write_12h_price: null,
   cache_read_price: null,
   image_input_price: null,
   image_output_price: null,
@@ -103,6 +113,8 @@ export const groupPricingFromAPI = (
     input_price: perTokenToMTok(entry.input_price),
     output_price: perTokenToMTok(entry.output_price),
     cache_write_price: perTokenToMTok(entry.cache_write_price),
+    cache_write_1h_price: perTokenToMTok(entry.cache_write_1h_price),
+    cache_write_12h_price: perTokenToMTok(entry.cache_write_12h_price),
     cache_read_price: perTokenToMTok(entry.cache_read_price),
     image_input_price: perTokenToMTok(entry.image_input_price),
     image_output_price: perTokenToMTok(entry.image_output_price),
@@ -127,6 +139,8 @@ export const groupPricingToAPI = (
       input_price: mTokToPerToken(entry.input_price),
       output_price: mTokToPerToken(entry.output_price),
       cache_write_price: mTokToPerToken(entry.cache_write_price),
+      cache_write_1h_price: mTokToPerToken(entry.cache_write_1h_price),
+      cache_write_12h_price: mTokToPerToken(entry.cache_write_12h_price),
       cache_read_price: mTokToPerToken(entry.cache_read_price),
       image_input_price: mTokToPerToken(entry.image_input_price),
       image_output_price: mTokToPerToken(entry.image_output_price),
@@ -147,6 +161,8 @@ const entryHasConfiguredPrice = (entry: GroupPricingFormEntry): boolean =>
     entry.input_price,
     entry.output_price,
     entry.cache_write_price,
+    entry.cache_write_1h_price,
+    entry.cache_write_12h_price,
     entry.cache_read_price,
     entry.image_input_price,
     entry.image_output_price,
@@ -186,6 +202,8 @@ export const updateGroupPricingModels = async (
       input_price: perTokenToMTok(defaults.input_price),
       output_price: perTokenToMTok(defaults.output_price),
       cache_write_price: perTokenToMTok(defaults.cache_write_price),
+      cache_write_1h_price: perTokenToMTok(defaults.cache_write_1h_price),
+      cache_write_12h_price: perTokenToMTok(defaults.cache_write_12h_price),
       cache_read_price: perTokenToMTok(defaults.cache_read_price),
       image_input_price: perTokenToMTok(defaults.image_input_price),
       image_output_price: perTokenToMTok(defaults.image_output_price),

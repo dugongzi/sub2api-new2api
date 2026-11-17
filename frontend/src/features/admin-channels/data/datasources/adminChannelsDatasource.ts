@@ -128,6 +128,8 @@ export interface ModelDefaultPricing {
   input_price?: number    // per-token price
   output_price?: number
   cache_write_price?: number
+  cache_write_1h_price?: number
+  cache_write_12h_price?: number
   cache_read_price?: number
   image_input_price?: number
   image_output_price?: number

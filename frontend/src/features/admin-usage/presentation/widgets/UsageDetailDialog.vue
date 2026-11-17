@@ -260,6 +260,8 @@ const usageDetails = computed(() => {
     { key: 'cache_creation', label: t('usage.cacheCreationTokens'), value: usage.cache_creation_tokens.toLocaleString() },
     ...(usage.cache_creation_5m_tokens > 0 ? [{ key: 'cache_creation_5m', label: t('usage.cacheCreation5mTokens'), value: usage.cache_creation_5m_tokens.toLocaleString() }] : []),
     ...(usage.cache_creation_1h_tokens > 0 ? [{ key: 'cache_creation_1h', label: t('usage.cacheCreation1hTokens'), value: usage.cache_creation_1h_tokens.toLocaleString() }] : []),
+    ...((usage.cache_creation_30m_tokens ?? 0) > 0 ? [{ key: 'cache_creation_30m', label: `${t('usage.cacheCreationTokens')} (30m)`, value: (usage.cache_creation_30m_tokens ?? 0).toLocaleString() }] : []),
+    ...((usage.cache_creation_12h_tokens ?? 0) > 0 ? [{ key: 'cache_creation_12h', label: `${t('usage.cacheCreationTokens')} (12h)`, value: (usage.cache_creation_12h_tokens ?? 0).toLocaleString() }] : []),
     { key: 'cache_read', label: t('usage.cacheReadTokens'), value: usage.cache_read_tokens.toLocaleString() },
     { key: 'first_token', label: t('usage.firstToken'), value: formatDuration(usage.first_token_ms) },
     { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.duration_ms) },
@@ -269,7 +271,10 @@ const usageDetails = computed(() => {
 })
 
 const hasCacheTierBreakdown = computed(() =>
-  (props.usage?.cache_creation_5m_tokens ?? 0) > 0 || (props.usage?.cache_creation_1h_tokens ?? 0) > 0
+  (props.usage?.cache_creation_5m_tokens ?? 0) > 0 ||
+  (props.usage?.cache_creation_1h_tokens ?? 0) > 0 ||
+  (props.usage?.cache_creation_30m_tokens ?? 0) > 0 ||
+  (props.usage?.cache_creation_12h_tokens ?? 0) > 0
 )
 
 const timingDetails = computed(() => {
