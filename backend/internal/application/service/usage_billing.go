@@ -56,21 +56,25 @@ type UsageBillingCommand struct {
 	RequestPayloadHash string
 	APIKeyAuthCacheKey string
 
-	UserID              int64
-	AccountID           int64
-	GroupID             int64
-	SubscriptionID      *int64
-	AccountType         string
-	Model               string
-	ServiceTier         string
-	ReasoningEffort     string
-	BillingType         int8
-	InputTokens         int
-	OutputTokens        int
-	CacheCreationTokens int
-	CacheReadTokens     int
-	ImageCount          int
-	MediaType           string
+	UserID                 int64
+	AccountID              int64
+	GroupID                int64
+	SubscriptionID         *int64
+	AccountType            string
+	Model                  string
+	ServiceTier            string
+	ReasoningEffort        string
+	BillingType            int8
+	InputTokens            int
+	OutputTokens           int
+	CacheCreationTokens    int
+	CacheCreation5mTokens  int
+	CacheCreation1hTokens  int
+	CacheCreation30mTokens int
+	CacheCreation12hTokens int
+	CacheReadTokens        int
+	ImageCount             int
+	MediaType              string
 
 	BalanceCost         float64
 	SubscriptionCost    float64
