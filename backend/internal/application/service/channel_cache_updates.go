@@ -14,8 +14,9 @@ type ChannelCachePubSub interface {
 	SubscribeUpdates(func()) func()
 }
 
-func ProvideChannelService(repo ChannelRepository, groupRepo GroupRepository, auth APIKeyAuthCacheInvalidator, pricing *PricingService, bus ChannelCachePubSub) *ChannelService {
+func ProvideChannelService(repo ChannelRepository, groupRepo GroupRepository, auth APIKeyAuthCacheInvalidator, pricing *PricingService, billing *BillingService, bus ChannelCachePubSub) *ChannelService {
 	s := NewChannelService(repo, groupRepo, auth, pricing)
+	s.billingService = billing
 	s.cachePubSub = bus
 	if bus != nil {
 		s.stopCacheUpdates = bus.SubscribeUpdates(s.clearCache)

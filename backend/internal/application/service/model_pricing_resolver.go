@@ -203,6 +203,17 @@ func (r *ModelPricingResolver) applyTokenOverrides(chPricing *ChannelModelPricin
 	// 过滤掉所有价格字段都为空的无效 interval
 	validIntervals := filterValidIntervals(chPricing.Intervals)
 
+	// 1h 显式配置才启用 5m/1h 分档；区间内配置也要生效。
+	if chPricing.CacheWrite1hPrice != nil {
+		resolved.SupportsCacheBreakdown = true
+	}
+	for i := range validIntervals {
+		if validIntervals[i].CacheWrite1hPrice != nil {
+			resolved.SupportsCacheBreakdown = true
+			break
+		}
+	}
+
 	// 如果有有效的区间定价，使用区间
 	if len(validIntervals) > 0 {
 		resolved.Intervals = validIntervals
@@ -214,6 +225,7 @@ func (r *ModelPricingResolver) applyTokenOverrides(chPricing *ChannelModelPricin
 			cloned := *resolved.BasePricing
 			resolved.BasePricing = &cloned
 		}
+		resolved.BasePricing.SupportsCacheBreakdown = resolved.SupportsCacheBreakdown
 		if chPricing.ImageOutputPrice != nil {
 			resolved.BasePricing.ImageOutputPricePerToken = *chPricing.ImageOutputPrice
 		} else {
@@ -246,7 +258,21 @@ func (r *ModelPricingResolver) applyTokenOverrides(chPricing *ChannelModelPricin
 		resolved.BasePricing.CacheCreationPricePerToken = *chPricing.CacheWritePrice
 		resolved.BasePricing.CacheCreationPriceExplicit = true
 		resolved.BasePricing.CacheCreation5mPrice = *chPricing.CacheWritePrice
-		resolved.BasePricing.CacheCreation1hPrice = *chPricing.CacheWritePrice
+		if chPricing.CacheWrite1hPrice == nil {
+			resolved.BasePricing.CacheCreation1hPrice = *chPricing.CacheWritePrice
+		}
+	}
+	if chPricing.CacheWrite1hPrice != nil {
+		if resolved.BasePricing.CacheCreation5mPrice <= 0 {
+			resolved.BasePricing.CacheCreation5mPrice = resolved.BasePricing.CacheCreationPricePerToken
+		}
+		resolved.BasePricing.CacheCreation1hPrice = *chPricing.CacheWrite1hPrice
+		resolved.BasePricing.SupportsCacheBreakdown = true
+	}
+	if chPricing.CacheWrite12hPrice != nil {
+		resolved.BasePricing.CacheCreation12hPricePerToken = chPricing.CacheWrite12hPrice
+	} else if chPricing.CacheWritePrice != nil {
+		resolved.BasePricing.CacheCreation12hPricePerToken = nil
 	}
 	if chPricing.CacheReadPrice != nil {
 		resolved.BasePricing.CacheReadPricePerToken = *chPricing.CacheReadPrice
@@ -288,7 +314,8 @@ func filterValidIntervals(intervals []PricingInterval) []PricingInterval {
 	var valid []PricingInterval
 	for _, iv := range intervals {
 		if iv.InputPrice != nil || iv.OutputPrice != nil ||
-			iv.CacheWritePrice != nil || iv.CacheReadPrice != nil ||
+			iv.CacheWritePrice != nil || iv.CacheWrite1hPrice != nil || iv.CacheWrite12hPrice != nil ||
+			iv.CacheReadPrice != nil ||
 			iv.PerRequestPrice != nil {
 			valid = append(valid, iv)
 		}
@@ -327,7 +354,25 @@ func intervalToModelPricing(iv *PricingInterval, supportsCacheBreakdown bool, ch
 		pricing.CacheCreationPricePerToken = *iv.CacheWritePrice
 		pricing.CacheCreationPriceExplicit = true
 		pricing.CacheCreation5mPrice = *iv.CacheWritePrice
-		pricing.CacheCreation1hPrice = *iv.CacheWritePrice
+		if iv.CacheWrite1hPrice == nil {
+			pricing.CacheCreation1hPrice = *iv.CacheWritePrice
+		}
+	} else if chPricing != nil && chPricing.CacheWritePrice != nil &&
+		(iv.CacheWrite1hPrice != nil || iv.CacheWrite12hPrice != nil) {
+		// 区间只配置 1h/12h 时，基础档回退条目级价格。
+		pricing.CacheCreationPricePerToken = *chPricing.CacheWritePrice
+		pricing.CacheCreationPriceExplicit = true
+		pricing.CacheCreation5mPrice = *chPricing.CacheWritePrice
+		pricing.CacheCreation1hPrice = *chPricing.CacheWritePrice
+	}
+	if iv.CacheWrite1hPrice != nil {
+		pricing.CacheCreation1hPrice = *iv.CacheWrite1hPrice
+		pricing.SupportsCacheBreakdown = true
+	}
+	if iv.CacheWrite12hPrice != nil {
+		pricing.CacheCreation12hPricePerToken = iv.CacheWrite12hPrice
+	} else if iv.CacheWritePrice != nil {
+		pricing.CacheCreation12hPricePerToken = nil
 	}
 	if iv.CacheReadPrice != nil {
 		pricing.CacheReadPricePerToken = *iv.CacheReadPrice
