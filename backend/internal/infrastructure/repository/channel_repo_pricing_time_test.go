@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
 	"github.com/stretchr/testify/require"
 )
 
@@ -127,6 +127,53 @@ func TestChannelModelPricingTimePricingCreateAndUpdateRoundTrip(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		require.NoError(t, repo.UpdateModelPricing(context.Background(), pricing))
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+const channelModelPricingWeekdaysOnlyJSON = `{"timezone":"Asia/Shanghai","weekdays_only":true,"periods":[{"start_time":"09:00","end_time":"12:00","multiplier":2}]}`
+
+// 仅工作日标注必须随 time_pricing 列一起落库并原样读回，否则运维保存后周末仍会按倍率计费。
+func TestChannelModelPricingTimePricingWeekdaysOnlyRoundTrip(t *testing.T) {
+	pricing := &service.ChannelModelPricing{
+		ID:        11,
+		ChannelID: 7,
+		Platform:  "openai",
+		Models:    []string{"gpt-5"},
+		TimePricing: &service.ChannelTimePricing{
+			Timezone:     "Asia/Shanghai",
+			WeekdaysOnly: true,
+			Periods: []service.ChannelTimePricingPeriod{{
+				StartTime: "09:00", EndTime: "12:00", Multiplier: 2,
+			}},
+		},
+	}
+
+	t.Run("create writes weekdays_only", func(t *testing.T) {
+		repo, mock := newChannelModelPricingTimePricingRepo(t)
+		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO channel_model_pricing (channel_id, platform, models, billing_mode, input_price, output_price, cache_write_price, cache_write_1h_price, cache_write_12h_price, cache_read_price, fast_multiplier, flex_multiplier, image_input_price, image_output_price, per_request_price, time_pricing)")).
+			WithArgs(
+				int64(7), "openai", []byte(`["gpt-5"]`), service.BillingModeToken,
+				nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, channelModelPricingWeekdaysOnlyJSON,
+			).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(int64(11), time.Time{}, time.Time{}))
+
+		require.NoError(t, repo.CreateModelPricing(context.Background(), pricing))
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("list reads weekdays_only", func(t *testing.T) {
+		repo, mock := newChannelModelPricingTimePricingRepo(t)
+		mock.ExpectQuery(`(?s)SELECT .*per_request_price, time_pricing, created_at, updated_at.*FROM channel_model_pricing.*channel_id = \$1`).
+			WithArgs(int64(7)).
+			WillReturnRows(modelPricingTimePricingRow(channelModelPricingWeekdaysOnlyJSON))
+		expectEmptyModelPricingIntervals(mock)
+
+		got, err := repo.ListModelPricing(context.Background(), 7)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		require.NotNil(t, got[0].TimePricing)
+		require.True(t, got[0].TimePricing.WeekdaysOnly)
 		require.NoError(t, mock.ExpectationsWereMet())
 	})
 }

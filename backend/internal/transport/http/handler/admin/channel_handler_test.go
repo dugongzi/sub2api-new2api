@@ -478,6 +478,70 @@ func TestPricingRequestToService_NilPriceFields(t *testing.T) {
 	require.Nil(t, r.PerRequestPrice)
 }
 
+func TestPricingToResponse_TimePricing(t *testing.T) {
+	require.Nil(t, timePricingToResponse(nil))
+
+	resp := pricingToResponse(&service.ChannelModelPricing{
+		Models: []string{"m1"},
+		TimePricing: &service.ChannelTimePricing{
+			Timezone:     "Asia/Shanghai",
+			WeekdaysOnly: true,
+			Periods: []service.ChannelTimePricingPeriod{
+				{StartTime: "09:00", EndTime: "12:00", Multiplier: 2},
+			},
+		},
+	})
+	require.NotNil(t, resp.TimePricing)
+	require.Equal(t, "Asia/Shanghai", resp.TimePricing.Timezone)
+	require.True(t, resp.TimePricing.WeekdaysOnly)
+	require.Len(t, resp.TimePricing.Periods, 1)
+	require.Equal(t, "09:00", resp.TimePricing.Periods[0].StartTime)
+	require.Equal(t, "12:00", resp.TimePricing.Periods[0].EndTime)
+	require.Equal(t, 2.0, resp.TimePricing.Periods[0].Multiplier)
+}
+
+func TestTimePricingResponseAlwaysEmitsWeekdaysOnly(t *testing.T) {
+	body, err := json.Marshal(pricingToResponse(&service.ChannelModelPricing{
+		Models: []string{"m1"},
+		TimePricing: &service.ChannelTimePricing{
+			Timezone: "Asia/Shanghai",
+			Periods:  []service.ChannelTimePricingPeriod{{StartTime: "09:00", EndTime: "12:00", Multiplier: 2}},
+		},
+	}))
+	require.NoError(t, err)
+
+	var decoded map[string]any
+	require.NoError(t, json.Unmarshal(body, &decoded))
+	tp, ok := decoded["time_pricing"].(map[string]any)
+	require.True(t, ok)
+	require.Contains(t, tp, "weekdays_only")
+	require.Equal(t, false, tp["weekdays_only"])
+}
+
+func TestPricingRequestToService_TimePricing(t *testing.T) {
+	require.Nil(t, timePricingRequestToService(nil))
+
+	result := pricingRequestToService([]channelModelPricingRequest{
+		{
+			Models: []string{"m1"},
+			TimePricing: &channelTimePricingRequest{
+				Timezone:     "Asia/Shanghai",
+				WeekdaysOnly: true,
+				Periods: []channelTimePricingPeriodRequest{
+					{StartTime: "09:00", EndTime: "12:00", Multiplier: 2},
+				},
+			},
+		},
+	}, true)
+	require.Len(t, result, 1)
+	require.NotNil(t, result[0].TimePricing)
+	require.Equal(t, "Asia/Shanghai", result[0].TimePricing.Timezone)
+	require.True(t, result[0].TimePricing.WeekdaysOnly)
+	require.Equal(t, []service.ChannelTimePricingPeriod{
+		{StartTime: "09:00", EndTime: "12:00", Multiplier: 2},
+	}, result[0].TimePricing.Periods)
+}
+
 // ---------------------------------------------------------------------------
 // 3. SyncPricingModels handler
 // ---------------------------------------------------------------------------
