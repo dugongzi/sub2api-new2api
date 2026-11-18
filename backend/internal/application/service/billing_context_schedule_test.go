@@ -57,6 +57,28 @@ func TestResolveContextPricingScheduleFable51SingleTier(t *testing.T) {
 	require.Nil(t, tier.CacheWrite12h, "Anthropic 模型不产生 12h 桶")
 }
 
+func TestResolvedTimePricingScheduleKeepsWeekdaysOnly(t *testing.T) {
+	resolved := &ResolvedPricing{
+		Source: PricingSourceChannel,
+		channelPricing: &ChannelModelPricing{
+			TimePricing: &ChannelTimePricing{
+				Timezone:     "Asia/Shanghai",
+				WeekdaysOnly: true,
+				Periods: []ChannelTimePricingPeriod{
+					{StartTime: "00:30", EndTime: "08:30", Multiplier: 0.5},
+				},
+			},
+		},
+	}
+
+	sched := resolvedTimePricingSchedule(resolved)
+	require.NotNil(t, sched, "探针锚点必须落在工作日，否则仅工作日配置的时段会被整组剔除")
+	require.True(t, sched.WeekdaysOnly)
+	require.Equal(t, []TimePricingPeriod{
+		{StartTime: "00:30", EndTime: "08:30", Multiplier: 0.5},
+	}, sched.Periods)
+}
+
 func TestResolveContextPricingScheduleRequiresResolver(t *testing.T) {
 	svc := newTestBillingService()
 	_, err := svc.ResolveContextPricingSchedule(context.Background(), nil, ContextPricingScheduleInput{Model: "gpt-6-luna"})

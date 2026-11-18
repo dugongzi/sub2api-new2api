@@ -177,9 +177,8 @@ func resolvedTimePricingSchedule(resolved *ResolvedPricing) *TimePricingSchedule
 	}
 	sort.SliceStable(probed, func(i, j int) bool { return probed[i].start < probed[j].start })
 	out := &TimePricingSchedule{
-		Timezone: cfg.Timezone,
-		// 本地渠道分时配置暂无「仅工作日生效」开关，保留字段与上游响应形态一致。
-		WeekdaysOnly: false,
+		Timezone:     cfg.Timezone,
+		WeekdaysOnly: cfg.WeekdaysOnly,
 		Periods:      make([]TimePricingPeriod, 0, len(probed)),
 	}
 	for _, p := range probed {

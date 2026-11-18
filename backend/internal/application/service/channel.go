@@ -112,10 +112,12 @@ type ChannelModelPricing struct {
 
 // ChannelTimePricing describes recurring daily multiplier periods in an IANA
 // timezone. Periods are left-closed/right-open; an end time of 00:00 denotes
-// midnight at the end of the day.
+// midnight at the end of the day. WeekdaysOnly restricts periods to Monday
+// through Friday; weekends then stay on the standard price all day.
 type ChannelTimePricing struct {
-	Timezone string                     `json:"timezone"`
-	Periods  []ChannelTimePricingPeriod `json:"periods"`
+	Timezone     string                     `json:"timezone"`
+	WeekdaysOnly bool                       `json:"weekdays_only,omitempty"`
+	Periods      []ChannelTimePricingPeriod `json:"periods"`
 }
 
 type ChannelTimePricingPeriod struct {
@@ -222,7 +224,10 @@ func (p ChannelModelPricing) Clone() ChannelModelPricing {
 		copy(cp.Intervals, p.Intervals)
 	}
 	if p.TimePricing != nil {
-		cp.TimePricing = &ChannelTimePricing{Timezone: p.TimePricing.Timezone}
+		cp.TimePricing = &ChannelTimePricing{
+			Timezone:     p.TimePricing.Timezone,
+			WeekdaysOnly: p.TimePricing.WeekdaysOnly,
+		}
 		if p.TimePricing.Periods != nil {
 			cp.TimePricing.Periods = append([]ChannelTimePricingPeriod(nil), p.TimePricing.Periods...)
 		}

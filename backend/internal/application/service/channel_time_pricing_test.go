@@ -22,6 +22,40 @@ func TestChannelTimePricingMultiplierAtUsesTimezoneAndHalfOpenPeriods(t *testing
 	require.InDelta(t, 1.0, config.MultiplierAt(boundary), 1e-9)
 }
 
+func TestChannelTimePricingMultiplierAtWeekdaysOnly(t *testing.T) {
+	config := &ChannelTimePricing{
+		Timezone:     "Asia/Shanghai",
+		WeekdaysOnly: true,
+		Periods: []ChannelTimePricingPeriod{
+			{StartTime: "09:00", EndTime: "18:00", Multiplier: 2},
+		},
+	}
+	everyDay := &ChannelTimePricing{
+		Timezone: "Asia/Shanghai",
+		Periods: []ChannelTimePricingPeriod{
+			{StartTime: "09:00", EndTime: "18:00", Multiplier: 2},
+		},
+	}
+
+	tests := []struct {
+		name string
+		at   time.Time
+		want float64
+	}{
+		{name: "Monday in configured timezone", at: time.Date(2026, 6, 29, 1, 0, 0, 0, time.UTC), want: 2},
+		{name: "Saturday in configured timezone", at: time.Date(2026, 7, 4, 1, 0, 0, 0, time.UTC), want: 1},
+		{name: "Sunday in configured timezone", at: time.Date(2026, 7, 5, 1, 0, 0, 0, time.UTC), want: 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, config.MultiplierAt(tt.at))
+			// 相同时段配置下，weekdays_only 不能污染每日生效的编译缓存。
+			require.Equal(t, 2.0, everyDay.MultiplierAt(tt.at))
+		})
+	}
+}
+
 func TestChannelTimePricingRejectsOverlapAndInvalidTimezone(t *testing.T) {
 	require.Error(t, ValidateChannelTimePricing(&ChannelTimePricing{
 		Timezone: "Asia/Shanghai",

@@ -53,6 +53,9 @@ func (config *ChannelTimePricing) MultiplierAt(at time.Time) float64 {
 		return 1
 	}
 	local := at.In(compiled.location)
+	if config.WeekdaysOnly && (local.Weekday() == time.Saturday || local.Weekday() == time.Sunday) {
+		return 1
+	}
 	second := local.Hour()*3600 + local.Minute()*60 + local.Second()
 	for _, period := range compiled.periods {
 		if second >= period.start && second < period.end {
@@ -89,6 +92,9 @@ func channelTimePricingKey(config *ChannelTimePricing) string {
 	}
 	var b strings.Builder
 	_, _ = b.WriteString(strings.TrimSpace(config.Timezone))
+	if config.WeekdaysOnly {
+		_, _ = b.WriteString("|weekdays")
+	}
 	for _, period := range config.Periods {
 		_ = b.WriteByte('|')
 		_, _ = b.WriteString(period.StartTime)
