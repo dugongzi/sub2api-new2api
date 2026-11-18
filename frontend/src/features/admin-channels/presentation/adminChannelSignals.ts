@@ -12,6 +12,10 @@ export interface IntervalFormEntry {
   cache_write_1h_price: number | string | null
   cache_write_12h_price: number | string | null
   cache_read_price: number | string | null
+  input_multiplier: number | string | null
+  output_multiplier: number | string | null
+  cache_write_multiplier: number | string | null
+  cache_read_multiplier: number | string | null
   per_request_price: number | string | null
   sort_order: number
 }
@@ -25,6 +29,8 @@ export interface PricingFormEntry {
   cache_write_1h_price: number | string | null
   cache_write_12h_price: number | string | null
   cache_read_price: number | string | null
+  fast_multiplier?: number | string | null
+  flex_multiplier?: number | string | null
   image_input_price: number | string | null
   image_output_price: number | string | null
   per_request_price: number | string | null
@@ -68,6 +74,10 @@ export function apiIntervalsToForm(intervals: PricingInterval[]): IntervalFormEn
     cache_write_1h_price: perTokenToMTok(iv.cache_write_1h_price),
     cache_write_12h_price: perTokenToMTok(iv.cache_write_12h_price),
     cache_read_price: perTokenToMTok(iv.cache_read_price),
+    input_multiplier: iv.input_multiplier ?? null,
+    output_multiplier: iv.output_multiplier ?? null,
+    cache_write_multiplier: iv.cache_write_multiplier ?? null,
+    cache_read_multiplier: iv.cache_read_multiplier ?? null,
     per_request_price: iv.per_request_price,
     sort_order: iv.sort_order
   }))
@@ -84,6 +94,10 @@ export function formIntervalsToAPI(intervals: IntervalFormEntry[]): PricingInter
     cache_write_1h_price: mTokToPerToken(iv.cache_write_1h_price),
     cache_write_12h_price: mTokToPerToken(iv.cache_write_12h_price),
     cache_read_price: mTokToPerToken(iv.cache_read_price),
+    input_multiplier: toNullableNumber(iv.input_multiplier),
+    output_multiplier: toNullableNumber(iv.output_multiplier),
+    cache_write_multiplier: toNullableNumber(iv.cache_write_multiplier),
+    cache_read_multiplier: toNullableNumber(iv.cache_read_multiplier),
     per_request_price: toNullableNumber(iv.per_request_price),
     sort_order: iv.sort_order
   }))
@@ -218,7 +232,26 @@ function validateIntervalPrices(iv: IntervalFormEntry, idx: number, t: Translate
       )
     }
   }
+  const multipliers: [string, number | string | null][] = [
+    ['inputMultiplier', iv.input_multiplier],
+    ['outputMultiplier', iv.output_multiplier],
+    ['cacheWriteMultiplier', iv.cache_write_multiplier],
+    ['cacheReadMultiplier', iv.cache_read_multiplier],
+  ]
+  for (const [key, val] of multipliers) {
+    if (!isValidPositiveMultiplier(val)) {
+      const field = intervalPriceLabel(t, key)
+      return intervalValidationMessage(t, 'multiplierPositive', { index, field })
+    }
+  }
   return null
+}
+
+/** 倍率留空表示未配置；填写时必须为正数。 */
+export function isValidPositiveMultiplier(val: number | string | null | undefined): boolean {
+  if (val === null || val === undefined || val === '') return true
+  const multiplier = Number(val)
+  return Number.isFinite(multiplier) && multiplier > 0
 }
 
 function checkIntervalOverlap(sorted: IntervalFormEntry[], t: TranslateFn): string | null {

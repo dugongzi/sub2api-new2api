@@ -170,6 +170,8 @@ describe('channel form codec', () => {
       'cache_write_1h_price',
       'cache_write_12h_price',
       'cache_read_price',
+      'fast_multiplier',
+      'flex_multiplier',
       'image_input_price',
       'image_output_price',
       'per_request_price',

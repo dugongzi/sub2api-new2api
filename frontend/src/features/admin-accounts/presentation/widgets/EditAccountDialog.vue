@@ -1461,6 +1461,7 @@ const editAccountAdvancedContext = {
   codexWebSearchEnabled, editDailyResetHour, editDailyResetMode, editQuotaDailyLimit,
   editQuotaLimit, editQuotaWeeklyLimit, editResetTimezone, editWeeklyResetDay,
   editWeeklyResetHour, editWeeklyResetMode, expiresAtInput, form, getTempUnschedRuleKey,
+  groups: availableGroups,
   handleOllamaCloudUsageUpdated, interceptWarmupRequests, isOpenAIPersonalAccessTokenAccount,
   isSparkShadow, moveTempUnschedRule, openAIEndpointCapabilities, openAIEndpointCapabilityOptions,
   openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode,

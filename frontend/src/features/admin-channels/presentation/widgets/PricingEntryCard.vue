@@ -144,6 +144,19 @@
             </div>
           </div>
 
+          <div v-if="props.enableTierMultipliers" class="mt-3 grid max-w-md grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs text-gray-400">{{ t('admin.channels.form.fastMultiplier') }}</label>
+              <input :value="entry.fast_multiplier" @input="emitField('fast_multiplier', ($event.target as HTMLInputElement).value)"
+                type="number" step="any" min="0.000001" class="input mt-0.5 text-sm" :placeholder="t('admin.channels.form.multiplierPlaceholder')" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-400">{{ t('admin.channels.form.flexMultiplier') }}</label>
+              <input :value="entry.flex_multiplier" @input="emitField('flex_multiplier', ($event.target as HTMLInputElement).value)"
+                type="number" step="any" min="0.000001" class="input mt-0.5 text-sm" :placeholder="t('admin.channels.form.multiplierPlaceholder')" />
+            </div>
+          </div>
+
           <!-- Token intervals -->
           <div class="mt-3">
             <div class="flex items-center justify-between">
@@ -162,6 +175,7 @@
                 :interval="iv"
                 :platform="props.platform"
                 :mode="entry.billing_mode"
+                :enable-multipliers="props.enableTierMultipliers"
                 @update="updateInterval(idx, $event)"
                 @remove="removeInterval(idx)"
               />
@@ -274,7 +288,8 @@ const props = withDefaults(defineProps<{
   entry: PricingFormEntry
   platform?: string
   enableTimePricing?: boolean
-}>(), { enableTimePricing: false })
+  enableTierMultipliers?: boolean
+}>(), { enableTimePricing: false, enableTierMultipliers: false })
 
 const emit = defineEmits<{
   update: [entry: PricingFormEntry]
@@ -308,6 +323,8 @@ function addInterval() {
     input_price: null, output_price: null, cache_write_price: null,
     cache_write_1h_price: null, cache_write_12h_price: null,
     cache_read_price: null, per_request_price: null,
+    input_multiplier: null, output_multiplier: null,
+    cache_write_multiplier: null, cache_read_multiplier: null,
     sort_order: intervals.length
   })
   emit('update', { ...props.entry, intervals })
@@ -321,6 +338,8 @@ function addImageTier() {
     input_price: null, output_price: null, cache_write_price: null,
     cache_write_1h_price: null, cache_write_12h_price: null,
     cache_read_price: null, per_request_price: null,
+    input_multiplier: null, output_multiplier: null,
+    cache_write_multiplier: null, cache_read_multiplier: null,
     sort_order: intervals.length
   })
   emit('update', { ...props.entry, intervals })
@@ -336,6 +355,8 @@ function addTierWithLabel(label: string) {
     input_price: null, output_price: null, cache_write_price: null,
     cache_write_1h_price: null, cache_write_12h_price: null,
     cache_read_price: null, per_request_price: null,
+    input_multiplier: null, output_multiplier: null,
+    cache_write_multiplier: null, cache_read_multiplier: null,
     sort_order: intervals.length
   })
   emit('update', { ...props.entry, intervals })

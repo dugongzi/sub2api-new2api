@@ -448,6 +448,7 @@
                   :entry="entry"
                   :platform="section.platform"
                   :enable-time-pricing="true"
+                  :enable-tier-multipliers="true"
                   @update="updatePricingEntry(sIdx, idx, $event)"
                   @remove="removePricingEntry(sIdx, idx)"
                 />
@@ -636,7 +637,7 @@ import { getAll as getAllAdminGroups } from '@/features/admin-groups/data/dataso
 import { groupPlatformLabel } from '@/features/admin-groups/groupsLocale'
 import type { Channel, CreateChannelRequest, UpdateChannelRequest, AccountStatsPricingRule } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import type { PricingFormEntry } from '@/features/admin-channels/presentation/adminChannelSignals'
-import { findModelConflict, validateIntervals } from '@/features/admin-channels/presentation/adminChannelSignals'
+import { findModelConflict, isValidPositiveMultiplier, validateIntervals } from '@/features/admin-channels/presentation/adminChannelSignals'
 import type { PlatformSection } from '@/features/admin-channels/presentation/channelFormCodec'
 import {
   buildAccountStatsPricingRules,
@@ -1284,6 +1285,13 @@ async function handleSubmit() {
   // 校验区间合法性（范围、重叠等）
   for (const section of form.platforms.filter(s => s.enabled)) {
     for (const entry of section.model_pricing) {
+      if (!isValidPositiveMultiplier(entry.fast_multiplier) || !isValidPositiveMultiplier(entry.flex_multiplier)) {
+        const platformLabel = groupPlatformLabel(t, section.platform)
+        const modelLabel = entry.models.join(', ') || t('admin.channels.form.unnamed')
+        appStore.showError(`${platformLabel} - ${modelLabel}: ${t('admin.channels.form.multiplierPositive')}`)
+        activeTab.value = section.platform
+        return
+      }
       if (!entry.intervals || entry.intervals.length === 0) continue
       const intervalErr = validateIntervals(entry.intervals, entry.billing_mode, t)
       if (intervalErr) {

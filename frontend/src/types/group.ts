@@ -45,6 +45,10 @@ export interface PricingInterval {
   cache_write_1h_price: number | null
   cache_write_12h_price: number | null
   cache_read_price: number | null
+  input_multiplier?: number | null
+  output_multiplier?: number | null
+  cache_write_multiplier?: number | null
+  cache_read_multiplier?: number | null
   per_request_price: number | null
   sort_order: number
 }
@@ -60,6 +64,8 @@ export interface ChannelModelPricing {
   cache_write_1h_price: number | null
   cache_write_12h_price: number | null
   cache_read_price: number | null
+  fast_multiplier?: number | null
+  flex_multiplier?: number | null
   image_input_price: number | null
   image_output_price: number | null
   per_request_price: number | null

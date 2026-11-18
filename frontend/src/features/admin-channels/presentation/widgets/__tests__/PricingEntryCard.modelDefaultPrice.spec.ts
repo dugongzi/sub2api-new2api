@@ -106,3 +106,16 @@ describe('PricingEntryCard default price auto-fill', () => {
     }
   })
 })
+
+describe('PricingEntryCard service tier multipliers', () => {
+  it('shows Fast and Flex controls only when explicitly enabled', () => {
+    const hidden = shallowMount(PricingEntryCard, { props: { entry: createEntry() } })
+    expect(hidden.text()).not.toContain('admin.channels.form.fastMultiplier')
+
+    const shown = shallowMount(PricingEntryCard, {
+      props: { entry: createEntry(), enableTierMultipliers: true },
+    })
+    expect(shown.text()).toContain('admin.channels.form.fastMultiplier')
+    expect(shown.text()).toContain('admin.channels.form.flexMultiplier')
+  })
+})

@@ -75,6 +75,14 @@ function pricingFormEntryToAPI(
     cache_write_1h_price: mTokToPerToken(entry.cache_write_1h_price),
     cache_write_12h_price: mTokToPerToken(entry.cache_write_12h_price),
     cache_read_price: mTokToPerToken(entry.cache_read_price),
+    fast_multiplier:
+      entry.fast_multiplier != null && entry.fast_multiplier !== ''
+        ? Number(entry.fast_multiplier)
+        : null,
+    flex_multiplier:
+      entry.flex_multiplier != null && entry.flex_multiplier !== ''
+        ? Number(entry.flex_multiplier)
+        : null,
     image_input_price: mTokToPerToken(entry.image_input_price),
     image_output_price: mTokToPerToken(entry.image_output_price),
     per_request_price:
@@ -110,6 +118,8 @@ function pricingAPIEntryToForm(
     cache_write_1h_price: perTokenToMTok(entry.cache_write_1h_price),
     cache_write_12h_price: perTokenToMTok(entry.cache_write_12h_price),
     cache_read_price: perTokenToMTok(entry.cache_read_price),
+    fast_multiplier: entry.fast_multiplier,
+    flex_multiplier: entry.flex_multiplier,
     image_input_price: perTokenToMTok(entry.image_input_price),
     image_output_price: perTokenToMTok(entry.image_output_price),
     per_request_price: entry.per_request_price,
