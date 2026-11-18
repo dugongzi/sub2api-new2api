@@ -94,6 +94,13 @@ export default {
           perRequestPrice: '单次价格'
         }
       },
+      timePricingValidation: {
+        timezone: '请选择有效的 IANA 时区',
+        format: '开始时间和结束时间必须使用 HH:mm:ss 格式',
+        range: '开始时间必须早于结束时间；跨午夜请拆分为两个时间段',
+        overlap: '时间段不能重叠',
+        multiplier: '倍率必须大于 0，且最多保留两位小数'
+      },
       deleteConfirm: '确定要删除渠道「{name}」吗？此操作不可撤销。',
       columns: {
         name: '名称',
