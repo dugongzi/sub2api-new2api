@@ -24,6 +24,7 @@
 - 工具 schema 补 `required:null`、Messages `input_schema`、Gemini 元组数组和 Anthropic 对象根联合。清洗只沿 schema 边遍历，不改默认值/常量或同名用户属性。根联合改为收集分支后一次编码，最多 512 分支和 16 层，超限保留原 schema。对象根联合不能保留所有跨属性的分支关联，沿用上游工具兼容的属性合并目的；不作为本站参数授权或执行校验。
 - 前端修复用户/账号/监控切换后的旧响应覆盖、公告跨会话返回、设置失败重试、未加载分组即保存、IME 提前搜索/提交标签、上传读取竞态、卸载后启动 TOTP timer、日期跨午夜和取消编辑、RPM/倍率校验、科学计数 token 边界、回调斜杠及日历到期标签。
 - 回捞 #6474 / #8606 的 cache-write TTL 定价：渠道与分组价卡支持 Anthropic 5m/1h 和 OpenAI 30m/12h，`cache_write_price` 保持短 TTL 语义，留空回退短价；用量日志新增 30m/12h 明细，只有两桶穷尽等于聚合值时才按明细计费，存量账单不变。同步补回 Fable 5/5.1 兜底价和 OpenAI 高价缓存模型的 12h 默认价（输入价 2.5 倍）。迁移号改用本项目 264/265。
+- 回捞 #5851 的 Fast/Flex 与区间倍率：渠道价卡新增 `fast_multiplier` / `flex_multiplier`，区间价卡新增输入、输出、缓存写、缓存读四个倍率（迁移 266）；`billing_service` 删除 `ApplyServiceTierMultiplier` 旗帜，改由 `configuredServiceTierMultiplier` 依次取渠道显式倍率、`UltrafastCostMultiplier` 和通用档位默认值，`channelTierOverridePrice` 在渠道覆盖 Standard 价时沿用目录里的 Fast/Priority 比例。渠道区间覆盖与分组解析共用同一套价格覆盖函数。前端同步倍率控件，并在分组已统一启用长上下文阶梯时隐藏账号级开关。未配置新字段时报价路径与原来一致。
 
 ## 性能审查
 
@@ -36,11 +37,11 @@ DeepSeek 原实现对每条 assistant 消息在完整请求上执行一次 JSON 
 
 相同 Go 1.26.11、2 CPU、输入和 benchmark，各运行三次。原始样本见 [performance 记录](../diagnostics/upstream-deferred-20261115/records/performance.json)。这些数字不代表生产吞吐。schema、元数据与分组校验不新增外部 I/O、逐请求数据库查询、worker 或 timer；前端竞态保护是常数时间的请求版本比较。
 
-未采用的性能方案也记录了原因：余额预占不能叠加每流续期和 Lua 全集合求和；调度 memo 不能共享可变嵌套对象、无容量上限或忽略旧写入节点；上游按 hash 无条件释放 session 不能清除另一并行请求的租约。新的 token TTL、免费 Fast、资源授权和显式 Gemini cache 需要独立契约，不能只移植默认价或迁移编号。
+未采用的性能方案也记录了原因：余额预占不能叠加每流续期和 Lua 全集合求和；调度 memo 不能共享可变嵌套对象、无容量上限或忽略旧写入节点；上游按 hash 无条件释放 session 不能清除另一并行请求的租约。资源授权和显式 Gemini cache 需要独立契约，不能只移植默认价或迁移编号。
 
 ## 平滑升级与回退
 
-本轮不新增数据库 migration、Ent/Wire 生成结果、持久账单字段、Redis key 或序列化队列格式；两个二进制共用原数据库和缓存。旧账号显式模型映射继续优先，历史费用不重算。
+本轮不新增持久账单字段、Redis key 或序列化队列格式；两个二进制共用原数据库和缓存。新增的 264/265/266 只追加价格列与约束，旧版本忽略这些列即可继续运行。旧账号显式模型映射继续优先，历史费用不重算。
 
 先让处理负数订阅兑换和代理到期任务的节点升级，再恢复这些操作的并发执行。混合版本中的旧兑换节点和旧扫描 worker 仍有原竞态，不能用新节点的单元测试宣称整组已经具备保证。需要回退时，先暂停这些并发写入或把相应操作路由到仍保留修复的节点；回退二进制不执行 Down SQL。
 
