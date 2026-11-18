@@ -28,6 +28,7 @@ function makePricing(overrides: Partial<PricingFormEntry> = {}): PricingFormEntr
     image_output_price: null,
     per_request_price: null,
     intervals: [],
+    time_pricing: { timezone: 'Asia/Shanghai', weekdays_only: false, periods: [] },
     ...overrides,
   }
 }
@@ -176,6 +177,7 @@ describe('channel form codec', () => {
       'image_output_price',
       'per_request_price',
       'intervals',
+      'time_pricing',
     ])
     expect(result.model_pricing[0]).toMatchObject({
       input_price: 0.000005,

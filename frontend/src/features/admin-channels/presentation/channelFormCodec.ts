@@ -5,7 +5,9 @@ import type {
 } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import {
   apiIntervalsToForm,
+  apiTimePricingToForm,
   formIntervalsToAPI,
+  formTimePricingToAPI,
   mTokToPerToken,
   perTokenToMTok,
   type PricingFormEntry,
@@ -90,19 +92,7 @@ function pricingFormEntryToAPI(
         ? Number(entry.per_request_price)
         : null,
     intervals: formIntervalsToAPI(entry.intervals || []),
-    ...(entry.time_pricing && entry.time_pricing.periods.length > 0
-      ? {
-          time_pricing: {
-            timezone: entry.time_pricing.timezone,
-            weekdays_only: entry.time_pricing.weekdays_only === true,
-            periods: entry.time_pricing.periods.map(period => ({
-              start_time: period.start_time,
-              end_time: period.end_time,
-              multiplier: Number(period.multiplier)
-            }))
-          }
-        }
-      : {}),
+    time_pricing: formTimePricingToAPI(entry.time_pricing),
   }
 }
 
@@ -125,13 +115,7 @@ function pricingAPIEntryToForm(
     image_output_price: perTokenToMTok(entry.image_output_price),
     per_request_price: entry.per_request_price,
     intervals: apiIntervalsToForm(entry.intervals || []),
-    time_pricing: entry.time_pricing
-      ? {
-          timezone: entry.time_pricing.timezone,
-          weekdays_only: entry.time_pricing.weekdays_only === true,
-          periods: (entry.time_pricing.periods || []).map(period => ({ ...period }))
-        }
-      : null,
+    time_pricing: apiTimePricingToForm(entry.time_pricing),
   }
 }
 

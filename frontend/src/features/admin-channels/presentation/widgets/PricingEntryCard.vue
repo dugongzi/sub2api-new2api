@@ -87,7 +87,7 @@
             </label>
             <Select
               :modelValue="entry.billing_mode"
-              @update:modelValue="emit('update', { ...entry, billing_mode: $event as BillingMode, intervals: [], time_pricing: { ...timePricingValue, periods: [] } })"
+              @update:modelValue="emit('update', { ...entry, billing_mode: $event as BillingMode, intervals: [], time_pricing: { ...entry.time_pricing, periods: [] } })"
               :options="billingModeOptions"
               class="mt-1"
             />
@@ -184,7 +184,7 @@
 
           <TimePricingSection
             v-if="props.enableTimePricing"
-            :model-value="timePricingValue"
+            :model-value="entry.time_pricing"
             @update:model-value="emit('update', { ...entry, time_pricing: $event })"
           />
         </div>
@@ -309,8 +309,6 @@ const billingModeLabel = computed(() => {
   const opt = billingModeOptions.value.find(o => o.value === props.entry.billing_mode)
   return opt ? opt.label : props.entry.billing_mode
 })
-
-const timePricingValue = computed(() => props.entry.time_pricing || { timezone: 'Asia/Shanghai', weekdays_only: false, periods: [] })
 
 function emitField(field: keyof PricingFormEntry, value: string) {
   emit('update', { ...props.entry, [field]: value === '' ? null : value })

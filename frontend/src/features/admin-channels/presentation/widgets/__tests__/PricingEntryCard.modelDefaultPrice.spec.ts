@@ -1,7 +1,7 @@
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import PricingEntryCard from '@/features/admin-channels/presentation/widgets/PricingEntryCard.vue'
-import type { PricingFormEntry } from '../types'
+import type { PricingFormEntry } from '../adminChannelSignals'
 import channelsAPI from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 
 vi.mock('@/features/admin-channels/data/datasources/adminChannelsDatasource', () => ({
