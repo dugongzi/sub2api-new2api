@@ -1,13 +1,28 @@
 <template>
   <section class="mt-3 border-t border-gray-200 pt-3 dark:border-dark-600">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-      <div class="min-w-0 flex-1 sm:max-w-sm">
+      <div class="min-w-0 flex-1 sm:max-w-2xl">
         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.channels.form.timePricing') }}</label>
-        <label :for="`${idPrefix}-timezone`" class="mt-2 block text-xs text-gray-400">{{ t('admin.channels.form.timezone') }}</label>
-        <input :id="`${idPrefix}-timezone`" :value="modelValue.timezone" list="channel-time-pricing-timezones" class="input mt-1 w-full text-sm" placeholder="Asia/Shanghai" @input="updateTimezone(($event.target as HTMLInputElement).value)" />
-        <datalist id="channel-time-pricing-timezones">
-          <option v-for="timezone in commonTimezones" :key="timezone" :value="timezone" />
-        </datalist>
+        <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div class="min-w-0">
+            <label :for="`${idPrefix}-timezone`" class="block text-xs text-gray-400">{{ t('admin.channels.form.timezone') }}</label>
+            <input :id="`${idPrefix}-timezone`" :value="modelValue.timezone" list="channel-time-pricing-timezones" class="input mt-1 w-full text-sm" placeholder="Asia/Shanghai" @input="updateTimezone(($event.target as HTMLInputElement).value)" />
+            <datalist id="channel-time-pricing-timezones">
+              <option v-for="timezone in commonTimezones" :key="timezone" :value="timezone" />
+            </datalist>
+          </div>
+          <div class="min-w-0">
+            <label class="block text-xs text-gray-400">{{ t('admin.channels.form.timePricingDayScope') }}</label>
+            <Select
+              :model-value="modelValue.weekdays_only === true"
+              :options="dayScopeOptions"
+              :aria-label="t('admin.channels.form.timePricingDayScope')"
+              data-testid="time-pricing-day-scope"
+              class="mt-1 w-full"
+              @update:model-value="updateDayScope"
+            />
+          </div>
+        </div>
       </div>
       <button type="button" class="self-start text-xs text-primary-600 hover:text-primary-700 sm:self-end sm:pb-2" data-testid="add-time-period" @click="addPeriod">
         + {{ t('admin.channels.form.addTimePeriod') }}
@@ -36,12 +51,13 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance } from 'vue'
+import { computed, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 type TimePricingPeriod = { start_time: string; end_time: string; multiplier: number | string }
-type TimePricingValue = { timezone: string; periods: TimePricingPeriod[] }
+type TimePricingValue = { timezone: string; weekdays_only?: boolean; periods: TimePricingPeriod[] }
 
 const props = defineProps<{ modelValue: TimePricingValue }>()
 const emit = defineEmits<{ 'update:modelValue': [value: TimePricingValue] }>()
@@ -49,7 +65,15 @@ const { t } = useI18n()
 const idPrefix = `channel-time-pricing-${getCurrentInstance()?.uid ?? 'entry'}`
 const commonTimezones = ['UTC', 'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Singapore', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles']
 
+const dayScopeOptions = computed(() => [
+  { value: false, label: t('admin.channels.form.timePricingEveryDay') },
+  { value: true, label: t('admin.channels.form.timePricingWeekdaysOnly') },
+])
+
 function updateTimezone(timezone: string) { emit('update:modelValue', { ...props.modelValue, timezone }) }
+function updateDayScope(value: string | number | boolean | null) {
+  emit('update:modelValue', { ...props.modelValue, weekdays_only: value === true })
+}
 function addPeriod() {
   emit('update:modelValue', { ...props.modelValue, periods: [...props.modelValue.periods, { start_time: '09:00', end_time: '18:00', multiplier: '1.00' }] })
 }

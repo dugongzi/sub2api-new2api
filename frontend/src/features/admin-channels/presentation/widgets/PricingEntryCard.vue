@@ -310,7 +310,7 @@ const billingModeLabel = computed(() => {
   return opt ? opt.label : props.entry.billing_mode
 })
 
-const timePricingValue = computed(() => props.entry.time_pricing || { timezone: 'Asia/Shanghai', periods: [] })
+const timePricingValue = computed(() => props.entry.time_pricing || { timezone: 'Asia/Shanghai', weekdays_only: false, periods: [] })
 
 function emitField(field: keyof PricingFormEntry, value: string) {
   emit('update', { ...props.entry, [field]: value === '' ? null : value })

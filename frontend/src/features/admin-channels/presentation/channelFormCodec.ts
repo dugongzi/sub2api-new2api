@@ -94,6 +94,7 @@ function pricingFormEntryToAPI(
       ? {
           time_pricing: {
             timezone: entry.time_pricing.timezone,
+            weekdays_only: entry.time_pricing.weekdays_only === true,
             periods: entry.time_pricing.periods.map(period => ({
               start_time: period.start_time,
               end_time: period.end_time,
@@ -127,6 +128,7 @@ function pricingAPIEntryToForm(
     time_pricing: entry.time_pricing
       ? {
           timezone: entry.time_pricing.timezone,
+          weekdays_only: entry.time_pricing.weekdays_only === true,
           periods: (entry.time_pricing.periods || []).map(period => ({ ...period }))
         }
       : null,

@@ -37,6 +37,7 @@ export interface PricingFormEntry {
   intervals: IntervalFormEntry[]
   time_pricing?: {
     timezone: string
+    weekdays_only?: boolean
     periods: Array<{ start_time: string; end_time: string; multiplier: number | string }>
   } | null
 }

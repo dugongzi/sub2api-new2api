@@ -75,6 +75,7 @@ export interface ChannelModelPricing {
 
 export interface ChannelTimePricing {
   timezone: string
+  weekdays_only?: boolean
   periods: ChannelTimePricingPeriod[]
 }
 
