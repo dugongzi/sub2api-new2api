@@ -78,7 +78,7 @@ func TestGetIntervalPricing_MatchesInterval(t *testing.T) {
 
 	resolved := &ResolvedPricing{
 		Mode:                   BillingModeToken,
-		BasePricing:            &ModelPricing{InputPricePerToken: 5e-6},
+		BasePricing:            &ModelPricing{InputPricePerToken: 5e-6, SupportsCacheBreakdown: true},
 		SupportsCacheBreakdown: true,
 		Intervals: []PricingInterval{
 			{MinTokens: 0, MaxTokens: testPtrInt(128000), InputPrice: testPtrFloat64(1e-6), OutputPrice: testPtrFloat64(2e-6)},
@@ -142,7 +142,7 @@ func TestGPT56ExplicitZeroCacheWritePriceIsPreserved(t *testing.T) {
 	})
 
 	t.Run("interval price", func(t *testing.T) {
-		pricing := intervalToModelPricing(&PricingInterval{CacheWritePrice: &zero}, false, nil)
+		pricing := intervalToModelPricing(&PricingInterval{CacheWritePrice: &zero}, nil, nil)
 		require.True(t, pricing.CacheCreationPriceExplicit)
 
 		cost, err := bs.CalculateCostUnified(CostInput{
