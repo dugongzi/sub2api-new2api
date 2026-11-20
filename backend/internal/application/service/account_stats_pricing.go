@@ -201,12 +201,6 @@ func calculateTokenStatsCost(pricing *ChannelModelPricing, tokens UsageTokens) *
 				CacheReadPrice:     iv.CacheReadPrice,
 				PerRequestPrice:    iv.PerRequestPrice,
 			}
-			if p.CacheWritePrice == nil && (p.CacheWrite1hPrice != nil || p.CacheWrite12hPrice != nil) {
-				p.CacheWritePrice = pricing.CacheWritePrice
-			}
-			if p.CacheWrite1hPrice == nil && p.CacheWritePrice != nil {
-				p.CacheWrite1hPrice = p.CacheWritePrice
-			}
 		}
 	}
 	deref := func(ptr *float64) float64 {

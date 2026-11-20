@@ -228,6 +228,29 @@ func TestCalculateStatsCost_TokenBilling_WithCache(t *testing.T) {
 	require.InDelta(t, 0.95, *result, 1e-12)
 }
 
+func TestCalculateStatsCost_TokenBilling_IntervalDoesNotInheritChannelCacheWritePrice(t *testing.T) {
+	// 对齐上游：区间未配置 cache_write_price 时按 0 计，不回填渠道基础价。
+	pricing := &ChannelModelPricing{
+		BillingMode:     BillingModeToken,
+		CacheWritePrice: testPtrFloat64(0.003),
+		Intervals: []PricingInterval{{
+			MinTokens:         0,
+			MaxTokens:         nil,
+			CacheWrite1hPrice: testPtrFloat64(0.005),
+		}},
+	}
+	tokens := UsageTokens{
+		CacheCreationTokens:   200,
+		CacheCreation5mTokens: 80,
+		CacheCreation1hTokens: 120,
+	}
+
+	result := calculateTokenStatsCost(pricing, tokens)
+	require.NotNil(t, result)
+	// 区间短写价缺失按 0：80*0 + 120*0.005 = 0.6，而不是回填 0.003 得到 0.84。
+	require.InDelta(t, 0.6, *result, 1e-12)
+}
+
 func TestCalculateStatsCost_TokenBilling_WithImageOutput(t *testing.T) {
 	pricing := &ChannelModelPricing{
 		BillingMode:      BillingModeToken,
