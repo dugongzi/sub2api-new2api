@@ -730,6 +730,62 @@ func TestFilterValidIntervals(t *testing.T) {
 }
 
 // ===========================================================================
+// 8b. 区间倍率与区间缓存写入分档
+// ===========================================================================
+
+func TestFilterValidIntervals_KeepsMultiplierOnly(t *testing.T) {
+	tests := []struct {
+		name  string
+		entry PricingInterval
+	}{
+		{name: "input multiplier only", entry: PricingInterval{MinTokens: 0, InputMultiplier: testPtrFloat64(2)}},
+		{name: "output multiplier only", entry: PricingInterval{MinTokens: 0, OutputMultiplier: testPtrFloat64(2)}},
+		{name: "cache write multiplier only", entry: PricingInterval{MinTokens: 0, CacheWriteMultiplier: testPtrFloat64(2)}},
+		{name: "cache read multiplier only", entry: PricingInterval{MinTokens: 0, CacheReadMultiplier: testPtrFloat64(2)}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valid := filterValidIntervals([]PricingInterval{tt.entry})
+			require.Len(t, valid, 1, "multiplier-only interval must not be dropped")
+		})
+	}
+}
+
+func TestGetIntervalPricing_AppliesMultiplierFromBase(t *testing.T) {
+	resolved := &ResolvedPricing{
+		BasePricing: &ModelPricing{InputPricePerToken: 1e-6, OutputPricePerToken: 4e-6},
+		Intervals: []PricingInterval{{
+			MinTokens:        0,
+			InputMultiplier:  testPtrFloat64(2),
+			OutputMultiplier: testPtrFloat64(0.5),
+		}},
+	}
+	r := NewModelPricingResolver(&ChannelService{}, newTestBillingServiceForResolver())
+
+	pricing := r.GetIntervalPricing(resolved, 1000)
+	require.NotNil(t, pricing)
+	require.InDelta(t, 2e-6, pricing.InputPricePerToken, 1e-12)
+	require.InDelta(t, 2e-6, pricing.OutputPricePerToken, 1e-12)
+}
+
+func TestGetIntervalPricing_RestoresSupportsCacheBreakdown(t *testing.T) {
+	// 渠道只配置区间、没有 BasePricing 时，区间路径必须仍保留缓存分档能力。
+	resolved := &ResolvedPricing{
+		BasePricing:            nil,
+		SupportsCacheBreakdown: true,
+		Intervals: []PricingInterval{{
+			MinTokens:       0,
+			CacheWritePrice: testPtrFloat64(3e-6),
+		}},
+	}
+	r := NewModelPricingResolver(&ChannelService{}, newTestBillingServiceForResolver())
+
+	pricing := r.GetIntervalPricing(resolved, 1000)
+	require.NotNil(t, pricing)
+	require.True(t, pricing.SupportsCacheBreakdown)
+}
+
+// ===========================================================================
 // 9. ImageOutputPriceExplicit tests
 // ===========================================================================
 
