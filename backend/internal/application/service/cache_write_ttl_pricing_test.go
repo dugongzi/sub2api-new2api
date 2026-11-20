@@ -196,6 +196,23 @@ func TestDefaultOpenAICacheWrite12hPolicyBareGPT6Alias(t *testing.T) {
 	require.Nil(t, out.CacheCreation12hPricePerToken)
 }
 
+// 对齐上游：priority 分支在短写价与标准输入价都为 0 时，
+// 12h 价默认按 configuredServiceTierMultiplier 缩放（priority 为 2），而不是 1。
+func TestPriority12hRatioUsesServiceTierMultiplierWhenNoCatalogRatio(t *testing.T) {
+	svc := newTestBillingService()
+	pricing := &ModelPricing{
+		InputPricePerTokenPriority:    1e-6,
+		CacheCreationPricePerToken:    0,
+		InputPricePerToken:            0,
+		CacheCreation12hPricePerToken: floatPtr(1e-6),
+	}
+	cost := svc.computeTokenBreakdown(pricing, UsageTokens{
+		CacheCreationTokens:    100,
+		CacheCreation12hTokens: 100,
+	}, 1, nil, "priority", false)
+	require.InDelta(t, 100*2e-6, cost.CacheCreationCost, 1e-12)
+}
+
 func TestClaudeFableCacheWriteFallbackPricing(t *testing.T) {
 	svc := newTestBillingService()
 	for _, tc := range []struct {

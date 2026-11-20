@@ -1515,8 +1515,8 @@ func (s *BillingService) computeTokenBreakdown(
 			cacheCreationPrice = pricing.CacheCreationPricePerTokenPriority
 		}
 		if pricing.CacheCreation12hPricePerToken != nil {
-			// 免费短写 + 免费普通输入没有可用的官方比例，保持 1.0（与上游一致）。
-			ratio := 1.0
+			// Free short writes and free ordinary input have no usable catalog ratio.
+			ratio := configuredServiceTierMultiplier(serviceTier, pricing)
 			if pricing.CacheCreationPricePerToken > 0 {
 				ratio = cacheCreationPrice / pricing.CacheCreationPricePerToken
 			} else if pricing.InputPricePerToken > 0 {
