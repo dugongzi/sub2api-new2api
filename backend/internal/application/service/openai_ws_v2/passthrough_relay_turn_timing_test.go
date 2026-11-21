@@ -31,7 +31,11 @@ func TestRelay_OnTurnComplete_FirstTokenMsRecordedForEveryTurn(t *testing.T) {
 			upstreamConn,
 			[]byte(`{"type":"response.create","model":"gpt-5.3-codex","input":[]}`),
 			RelayOptions{
-				Now: func() time.Time { return time.Unix(0, clock.Load()).UTC() },
+				Now:                func() time.Time { return time.Unix(0, clock.Load()).UTC() },
+				FirstTurnStartedAt: firstTurnAt,
+				TakeNextTurnStartedAt: func() time.Time {
+					return secondTurnAt
+				},
 				OnTurnComplete: func(current RelayTurnResult) {
 					turns <- current
 				},
@@ -73,10 +77,14 @@ func TestRelay_OnTurnComplete_FirstTokenMsRecordedForEveryTurn(t *testing.T) {
 	require.Eventually(t, func() bool { return len(upstreamConn.Writes()) == 2 }, time.Second, time.Millisecond)
 	secondTurn := sendTurn("resp_second", secondTurnAt)
 
+	// StartedAt is the accepted response.create instant (the handshake time for
+	// the first turn), not the later response.created event.
+	require.Equal(t, firstTurnAt, firstTurn.StartedAt)
+	require.Equal(t, secondTurnAt, secondTurn.StartedAt)
 	for _, turn := range []RelayTurnResult{firstTurn, secondTurn} {
 		require.NotNil(t, turn.FirstTokenMs, "turn %s must record its own first token", turn.RequestID)
-		require.Equal(t, 600, *turn.FirstTokenMs, "turn %s first token is measured from its own start", turn.RequestID)
-		require.Equal(t, 1900*time.Millisecond, turn.Duration)
+		require.Equal(t, 700, *turn.FirstTokenMs, "turn %s first token is measured from its own start", turn.RequestID)
+		require.Equal(t, 2*time.Second, turn.Duration)
 	}
 
 	cancel()

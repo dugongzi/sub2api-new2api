@@ -1043,6 +1043,11 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 	}
 
 	completedTurns := atomic.Int32{}
+	// acceptedTurnStartedAt tags each admitted response.create with the moment
+	// the policy-enforcing connection accepted it. The relay consumes it to
+	// stamp the turn's billing instant; the first turn instead uses the
+	// handshake time because passthrough never calls BeforeTurn for turn 1.
+	var acceptedTurnStartedAt atomic.Pointer[time.Time]
 	var responseTurnState atomic.Pointer[string]
 	// activeHookTurn: -1 means relay closed, 0 means idle, and positive values
 	// identify the admitted turn whose AfterTurn callback is still pending.
@@ -1102,6 +1107,10 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 			isResponseCreate := eventType == "response.create"
 			integrityOriginalPayload := append([]byte(nil), payload...)
 			turnNo := int(completedTurns.Load()) + 1
+			responseCreateAt := time.Time{}
+			if isResponseCreate {
+				responseCreateAt = time.Now()
+			}
 			if turnNo < 2 {
 				turnNo = 2
 			}
@@ -1268,6 +1277,8 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 			if policyErr == nil && blocked == nil && isResponseCreate {
 				responseTurnState.Store(nil)
 				usageMeta.updateFromResponseCreate(out, model, requestModelForThisFrame)
+				responseCreateAtCopy := responseCreateAt
+				acceptedTurnStartedAt.Store(&responseCreateAtCopy)
 				acceptedTurn = true
 				s.observeOpenAIRequestIntegrity(ctx, c, account, integrityOriginalPayload, out, "websocket_passthrough")
 			}
@@ -1317,14 +1328,26 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 		}
 	}
 
+	firstTurnStartedAt := time.Time{}
+	if hooks != nil {
+		firstTurnStartedAt = hooks.InitialTurnStartedAt
+	}
 	relayResult, relayExit := openaiwsv2.RunEntry(openaiwsv2.EntryInput{
 		Ctx:                ctx,
 		ClientConn:         policyClientConn,
 		UpstreamConn:       relayUpstreamFrameConn,
 		FirstClientMessage: firstClientMessage,
 		Options: openaiwsv2.RelayOptions{
-			WriteTimeout: s.openAIWSWriteTimeout(),
-			LegacyTTFT:   !visibleOutputTTFT,
+			WriteTimeout:       s.openAIWSWriteTimeout(),
+			FirstTurnStartedAt: firstTurnStartedAt,
+			TakeNextTurnStartedAt: func() time.Time {
+				startedAt := acceptedTurnStartedAt.Swap(nil)
+				if startedAt == nil {
+					return time.Time{}
+				}
+				return *startedAt
+			},
+			LegacyTTFT: !visibleOutputTTFT,
 			IsFirstTokenEvent: func(eventType string, message []byte) bool {
 				if strings.HasPrefix(strings.TrimSpace(eventType), "codex.") {
 					return false
@@ -1348,6 +1371,9 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 			},
 			OnTurnComplete: func(turn openaiwsv2.RelayTurnResult) {
 				turnNo := int(completedTurns.Add(1))
+				if hooks != nil && hooks.TurnStarted != nil && !turn.StartedAt.IsZero() {
+					hooks.TurnStarted(turnNo, turn.StartedAt)
+				}
 				turnRequestModel, turnUpstreamModel := usageMeta.turnModels(turn.RequestModel)
 				terminalEvent := normalizeOpenAIWSTerminalEvent(turn.TerminalEventType)
 				if terminalEvent == "response.completed" || terminalEvent == "response.done" {

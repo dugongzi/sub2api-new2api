@@ -55,6 +55,7 @@ type RelayTurnResult struct {
 	Usage                 Usage
 	RequestID             string
 	TerminalEventType     string
+	StartedAt             time.Time
 	Duration              time.Duration
 	FirstTokenMs          *int
 }
@@ -70,6 +71,8 @@ type RelayOptions struct {
 	WriteTimeout                    time.Duration
 	IdleTimeout                     time.Duration
 	UpstreamDrainTimeout            time.Duration
+	FirstTurnStartedAt              time.Time
+	TakeNextTurnStartedAt           func() time.Time
 	FirstMessageType                coderws.MessageType
 	FirstMessageSent                bool
 	StartClientAfterFirstDownstream bool
@@ -109,6 +112,7 @@ type relayState struct {
 	usage               Usage
 	requestModelMu      sync.RWMutex
 	requestModel        string
+	pendingTurnStart    atomic.Pointer[time.Time]
 	lastResponseID      string
 	lastResponseModel   string
 	responseConflict    bool
@@ -139,6 +143,7 @@ type observedUpstreamEvent struct {
 	eventType        string
 	responseID       string
 	usage            Usage
+	startedAt        time.Time
 	responseModel    string
 	responseConflict bool
 	duration         time.Duration
@@ -203,6 +208,16 @@ func Relay(
 	startAt := nowFn()
 	state := &relayState{requestModel: result.RequestModel, legacyTTFT: options.LegacyTTFT, isFirstTokenEvent: options.IsFirstTokenEvent}
 	state.pendingTurn.Store(strings.TrimSpace(gjson.GetBytes(firstClientMessage, "type").String()) == "response.create")
+	if state.pendingTurn.Load() {
+		// Passthrough ingress never calls the first turn's BeforeTurn, so the
+		// handshake time stands in for it; later turns report their own
+		// accepted response.create time through TakeNextTurnStartedAt.
+		firstTurnStartedAt := options.FirstTurnStartedAt
+		if firstTurnStartedAt.IsZero() {
+			firstTurnStartedAt = startAt
+		}
+		state.setPendingTurnStartedAt(firstTurnStartedAt)
+	}
 	onTrace := options.OnTrace
 
 	relayCtx, relayCancel := context.WithCancel(ctx)
@@ -222,6 +237,14 @@ func Relay(
 	writeClientFrameUpstream := func(msgType coderws.MessageType, payload []byte) error {
 		if strings.TrimSpace(gjson.GetBytes(payload, "type").String()) == "response.create" {
 			state.setRequestModel(strings.TrimSpace(gjson.GetBytes(payload, "model").String()))
+			turnStartedAt := time.Time{}
+			if options.TakeNextTurnStartedAt != nil {
+				turnStartedAt = options.TakeNextTurnStartedAt()
+			}
+			if turnStartedAt.IsZero() {
+				turnStartedAt = nowFn()
+			}
+			state.setPendingTurnStartedAt(turnStartedAt)
 			state.pendingTurn.Store(true)
 			state.turnWroteDownstream.Store(false)
 			state.resetFirstEventTTFT()
@@ -618,6 +641,7 @@ func runUpstreamToClient(
 			// Binary payloads stay opaque to billing; JSON terminals still settle lifecycle.
 			if isTerminalEvent(strings.TrimSpace(gjson.GetBytes(payload, "type").String())) {
 				state.pendingTurn.Store(false)
+				state.consumePendingTurnStartedAt()
 				state.activeTurn = nil
 			}
 		}
@@ -892,9 +916,15 @@ func observeUpstreamMessage(
 			if duration < 0 {
 				duration = 0
 			}
+			observed.startedAt = turnTiming.startAt
 			observed.duration = duration
 			observed.firstToken = openAIWSRelayCloneIntPtr(turnTiming.firstTokenMs)
 		}
+	} else {
+		// Terminal frame without a response id cannot resolve a turn; drop the
+		// pending start so it cannot leak into the next response.create.
+		state.consumePendingTurnStartedAt()
+		state.activeTurn = nil
 	}
 	// The aggregate first-token value is already retained above; clear the
 	// turn-local candidate before the next response.create frame.
@@ -925,6 +955,7 @@ func emitTurnComplete(
 		Usage:                 observed.usage,
 		RequestID:             responseID,
 		TerminalEventType:     observed.eventType,
+		StartedAt:             observed.startedAt,
 		Duration:              observed.duration,
 		FirstTokenMs:          openAIWSRelayCloneIntPtr(observed.firstToken),
 		OpenAITiming:          observed.openAITiming,
@@ -999,12 +1030,35 @@ func openAIWSRelayGetOrInitTurnTiming(state *relayState, responseID string, now 
 	}
 	timing, ok := state.turnTimingByID[responseID]
 	if !ok || timing == nil || timing.startAt.IsZero() {
-		timing = &relayTurnTiming{startAt: now}
+		startAt := state.consumePendingTurnStartedAt()
+		if startAt.IsZero() {
+			startAt = now
+		}
+		timing = &relayTurnTiming{startAt: startAt}
 		state.turnTimingByID[responseID] = timing
 		state.activeTurn = timing
 		return timing
 	}
 	return timing
+}
+
+func (s *relayState) setPendingTurnStartedAt(startedAt time.Time) {
+	if s == nil || startedAt.IsZero() {
+		return
+	}
+	startedAtCopy := startedAt
+	s.pendingTurnStart.Store(&startedAtCopy)
+}
+
+func (s *relayState) consumePendingTurnStartedAt() time.Time {
+	if s == nil {
+		return time.Time{}
+	}
+	startedAt := s.pendingTurnStart.Swap(nil)
+	if startedAt == nil {
+		return time.Time{}
+	}
+	return *startedAt
 }
 
 func openAIWSRelayDeleteTurnTiming(state *relayState, responseID string) (relayTurnTiming, bool) {

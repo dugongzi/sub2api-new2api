@@ -5,11 +5,25 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/DR-lin-eng/sub2api-no2api/internal/application/service"
 	coderws "github.com/coder/websocket"
 	"github.com/stretchr/testify/require"
 )
+
+// A20：passthrough 首轮不会调用 BeforeTurn，因此没有 freeze 时必须回退到
+// relay 报告的本轮起点，而不是零值。
+func TestOpenAIWSTurnPricingCurrentOrFallsBackToTurnStart(t *testing.T) {
+	turnStart := time.Date(2026, time.November, 21, 10, 0, 0, 0, time.UTC)
+
+	var pricing openAIWSTurnPricing
+	require.Equal(t, turnStart, pricing.currentOr(turnStart))
+
+	frozen := turnStart.Add(30 * time.Second)
+	pricing.freeze(frozen)
+	require.Equal(t, frozen, pricing.currentOr(turnStart))
+}
 
 func TestOpenAIWSTurnChannelMappingStateKeepsExactTurnSnapshot(t *testing.T) {
 	var state openAIWSTurnChannelMappingState
