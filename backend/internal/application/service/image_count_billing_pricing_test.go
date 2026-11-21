@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +29,7 @@ func TestImageCountBillingChannelContextTier(t *testing.T) {
 		openai := &OpenAIGatewayService{billingService: resolver.billingService, resolver: resolver}
 		resolved, err := openai.calculateOpenAIRecordUsageCostWithResolution(context.Background(), &OpenAIForwardResult{
 			Model: model, ImageCount: 2, ImageEndpoint: true, ImageSize: "1K", Usage: OpenAIUsage{InputTokens: 5000, OutputTokens: 100},
-		}, key, []string{model}, 1, 1, 1, 1, UsageTokens{InputTokens: 5000, OutputTokens: 100}, "", false, false)
+		}, key, []string{model}, 1, 1, 1, 1, time.Time{}, UsageTokens{InputTokens: 5000, OutputTokens: 100}, "", false, false)
 		require.NoError(t, err)
 		require.InDelta(t, .6, resolved.Cost.TotalCost, 1e-12)
 	}

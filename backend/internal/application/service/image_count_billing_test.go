@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +44,7 @@ func TestImageCountBillingTransaction(t *testing.T) {
 					result := &OpenAIForwardResult{Model: model, ImageCount: 2, ImageSize: "1K"}
 					require.NoError(t, json.Unmarshal(payload, result))
 					svc := &OpenAIGatewayService{billingService: resolver.billingService, resolver: resolver}
-					resolved, err := svc.calculateOpenAIRecordUsageCostWithResolution(ctx, result, key, []string{model}, 1, 1, 1, 1, UsageTokens{InputTokens: 1000, OutputTokens: 100}, "", false, false)
+					resolved, err := svc.calculateOpenAIRecordUsageCostWithResolution(ctx, result, key, []string{model}, 1, 1, 1, 1, time.Time{}, UsageTokens{InputTokens: 1000, OutputTokens: 100}, "", false, false)
 					require.NoError(t, err)
 					cost = resolved.Cost
 				}

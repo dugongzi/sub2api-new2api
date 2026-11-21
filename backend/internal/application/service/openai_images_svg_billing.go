@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
@@ -35,7 +36,7 @@ func parseOpenAIImagesSVGUsage(value gjson.Result) *OpenAIImagesSVGUsage {
 	return usage
 }
 
-func (s *OpenAIGatewayService) addOpenAIImagesSVGCost(ctx context.Context, result *OpenAIForwardResult, apiKey *APIKey, base *CostBreakdown, multiplier float64, longContextBillingEnabled bool) (*CostBreakdown, error) {
+func (s *OpenAIGatewayService) addOpenAIImagesSVGCost(ctx context.Context, result *OpenAIForwardResult, apiKey *APIKey, base *CostBreakdown, multiplier float64, pricingAt time.Time, longContextBillingEnabled bool) (*CostBreakdown, error) {
 	if !result.ImageEndpoint || result.Usage.SVGUsage == nil || base == nil {
 		return base, nil
 	}
@@ -44,7 +45,7 @@ func (s *OpenAIGatewayService) addOpenAIImagesSVGCost(ctx context.Context, resul
 		return base, nil
 	}
 	author := result.Usage.SVGUsage
-	cost, _, err := s.calculateOpenAIRecordUsageTokenCost(ctx, apiKey, author.Model, multiplier, nil,
+	cost, _, err := s.calculateOpenAIRecordUsageTokenCost(ctx, apiKey, author.Model, multiplier, pricingAt, nil,
 		UsageTokens{InputTokens: author.InputTokens, OutputTokens: author.OutputTokens}, "", longContextBillingEnabled, false, nil)
 	if err != nil {
 		return nil, fmt.Errorf("calculate SVG author cost for %s: %w", author.Model, err)

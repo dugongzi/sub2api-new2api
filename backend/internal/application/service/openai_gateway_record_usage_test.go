@@ -2828,3 +2828,57 @@ func TestGatewayServiceCalculateRecordUsageCost_ChannelImageBillingNormalizesMis
 	require.InDelta(t, 0.44, cost.TotalCost, 1e-12)
 	require.InDelta(t, 0.44, cost.ActualCost, 1e-12)
 }
+
+// A19：统一 token 计费必须拿到请求时刻。分时区间内按倍率放大，
+// 区间外回落 1.0；两者都用显式 PricingAt 固定，不依赖当前时钟。
+func TestOpenAIRecordUsageTokenCostAppliesChannelTimePricing(t *testing.T) {
+	groupID := int64(128)
+	model := "gpt-5.6-sol"
+	inputPrice := 1e-6
+	outputPrice := 2e-6
+	cache := newEmptyChannelCache()
+	cache.pricingByGroupModel[channelModelKey{groupID: groupID, model: model}] = &ChannelModelPricing{
+		BillingMode: BillingModeToken,
+		InputPrice:  &inputPrice,
+		OutputPrice: &outputPrice,
+		TimePricing: &ChannelTimePricing{
+			Timezone: "UTC",
+			Periods:  []ChannelTimePricingPeriod{{StartTime: "09:00", EndTime: "12:00", Multiplier: 2}},
+		},
+	}
+	cache.channelByGroupID[groupID] = &Channel{ID: groupID, Status: StatusActive}
+	cache.loadedAt = time.Now()
+	channelService := &ChannelService{}
+	channelService.cache.Store(cache)
+
+	billingService := NewBillingService(&config.Config{}, nil)
+	svc := &OpenAIGatewayService{
+		billingService: billingService,
+		resolver:       NewModelPricingResolver(channelService, billingService),
+	}
+	key := &APIKey{ID: 9, GroupID: i64p(groupID), Group: &Group{ID: groupID, Platform: PlatformOpenAI}}
+
+	costAt := func(at time.Time) (*CostBreakdown, *ResolvedPricing) {
+		resolution, err := svc.calculateOpenAIRecordUsageCostWithResolution(
+			context.Background(),
+			&OpenAIForwardResult{Model: model},
+			key,
+			[]string{model},
+			1, 1, 1, 1,
+			at,
+			UsageTokens{InputTokens: 1000, OutputTokens: 100},
+			"", true, false,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, resolution.Cost)
+		require.NotNil(t, resolution.Pricing)
+		require.Equal(t, PricingSourceChannel, resolution.Pricing.Source)
+		return resolution.Cost, resolution.Pricing
+	}
+
+	inPeriod, _ := costAt(time.Date(2026, 11, 21, 10, 0, 0, 0, time.UTC))
+	outside, _ := costAt(time.Date(2026, 11, 21, 13, 0, 0, 0, time.UTC))
+
+	require.InDelta(t, 1000*inputPrice+100*outputPrice, outside.TotalCost, 1e-12)
+	require.InDelta(t, 2*outside.TotalCost, inPeriod.TotalCost, 1e-12)
+}

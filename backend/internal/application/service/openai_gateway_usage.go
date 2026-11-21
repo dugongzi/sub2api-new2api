@@ -175,7 +175,8 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 	// 默认 token 倍率叠加高峰因子；开启独立生图倍率时，图片 token 与按次图片改用独立倍率。高峰因子按请求时刻现算，
 	// 不并入上面的 Resolve，以免污染 user:group 倍率缓存。
 	baseMultiplier := multiplier
-	multiplier, imageMultiplier := computePeakAwareMultipliers(apiKey, baseMultiplier, openAIUsagePricingAt(input))
+	pricingAt := openAIUsagePricingAt(input)
+	multiplier, imageMultiplier := computePeakAwareMultipliers(apiKey, baseMultiplier, pricingAt)
 	videoMultiplier := resolveVideoRateMultiplier(apiKey, baseMultiplier)
 
 	var cost *CostBreakdown
@@ -226,6 +227,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		imageMultiplier,
 		videoMultiplier,
 		baseMultiplier,
+		pricingAt,
 		tokens,
 		serviceTier,
 		longContextBillingEnabled,
@@ -268,6 +270,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 					apiKey,
 					responseModel,
 					multiplier,
+					pricingAt,
 					nil,
 					tokens,
 					serviceTier,
@@ -291,7 +294,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		}
 	}
 
-	cost, err = s.addOpenAIImagesSVGCost(ctx, result, apiKey, cost, multiplier, longContextBillingEnabled)
+	cost, err = s.addOpenAIImagesSVGCost(ctx, result, apiKey, cost, multiplier, pricingAt, longContextBillingEnabled)
 	if err != nil {
 		return err
 	}
@@ -497,6 +500,7 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageCostWithResolution(
 	imageMultiplier float64,
 	videoMultiplier float64,
 	webSearchMultiplier float64,
+	pricingAt time.Time,
 	tokens UsageTokens,
 	serviceTier string,
 	longContextBillingEnabled bool,
@@ -556,6 +560,7 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageCostWithResolution(
 			apiKey,
 			candidate,
 			multiplier,
+			pricingAt,
 			tokenImageMultiplier,
 			tokens,
 			serviceTier,
@@ -608,6 +613,7 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageTokenCost(
 	apiKey *APIKey,
 	billingModel string,
 	multiplier float64,
+	pricingAt time.Time,
 	imageMultiplier *float64,
 	tokens UsageTokens,
 	serviceTier string,
@@ -629,6 +635,7 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageTokenCost(
 			RequestCount:                   1,
 			RateMultiplier:                 multiplier,
 			ImageRateMultiplier:            imageMultiplier,
+			PricingAt:                      pricingAt,
 			ServiceTier:                    serviceTier,
 			Resolver:                       s.resolver,
 			Resolved:                       resolved,
