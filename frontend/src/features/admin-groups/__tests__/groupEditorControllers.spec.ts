@@ -4,6 +4,7 @@ import type { AdminGroup } from "@/types";
 import { useCreateGroupController } from "../presentation/composables/useCreateGroupController";
 import { useEditGroupController } from "../presentation/composables/useEditGroupController";
 import { useGroupEditorRuntime } from "../presentation/composables/useGroupEditorRuntime";
+import { groupPricingFromAPI } from "../presentation/groupsModelPricing";
 
 const {
   createGroup,
@@ -300,5 +301,49 @@ describe("group editor controllers", () => {
     resolveUpdate({ ...sourceGroup, name: "Updated" });
     await submit;
     expect(loadGroups).toHaveBeenCalledTimes(1);
+  });
+
+  it("round-trips cache write TTL prices through the create form", async () => {
+    const loadGroups = vi.fn();
+    const groups = ref<AdminGroup[]>([]);
+    const { controller } = scope.run(() => {
+      const runtime = useGroupEditorRuntime();
+      return {
+        controller: useCreateGroupController({ groups, loadGroups, runtime }),
+      };
+    })!;
+    const form = controller.dialogContext.form;
+    form.name = "CacheTTL";
+    controller.dialogContext.addModelPricing();
+    form.model_pricing[0].models = ["claude-fable-5-1"];
+    form.model_pricing[0].input_price = "3";
+    form.model_pricing[0].output_price = "15";
+    form.model_pricing[0].cache_write_price = "3.75";
+    form.model_pricing[0].cache_write_1h_price = "7.5";
+    form.model_pricing[0].cache_write_12h_price = "30";
+
+    createGroup.mockResolvedValueOnce({
+      ...sourceGroup,
+      id: 44,
+      name: "CacheTTL",
+    });
+    await controller.dialogContext.submit();
+
+    const request = createGroup.mock.calls[0][0];
+    const sent = request.model_pricing[0];
+    expect(sent).toMatchObject({
+      models: ["claude-fable-5-1"],
+      cache_write_price: 3.75e-6,
+      cache_write_1h_price: 7.5e-6,
+      cache_write_12h_price: 30e-6,
+    });
+
+    // 回读：服务端返回同一份定价后，表单应还原为 MTok 输入值。
+    const reloaded = groupPricingFromAPI(request.model_pricing);
+    expect(reloaded[0]).toMatchObject({
+      cache_write_price: 3.75,
+      cache_write_1h_price: 7.5,
+      cache_write_12h_price: 30,
+    });
   });
 });
