@@ -101,16 +101,16 @@ func TestComputeTokenBreakdown_ChannelFastMultiplierOverridesCatalogTier(t *test
 
 func TestIntervalToModelPricing_AppliesInputMultiplier(t *testing.T) {
 	base := &ModelPricing{
-		InputPricePerToken:             2e-6,
-		InputPricePerTokenPriority:     4e-6,
-		OutputPricePerToken:            10e-6,
-		OutputPricePerTokenPriority:    20e-6,
-		CacheCreationPricePerToken:     2e-6,
+		InputPricePerToken:                 2e-6,
+		InputPricePerTokenPriority:         4e-6,
+		OutputPricePerToken:                10e-6,
+		OutputPricePerTokenPriority:        20e-6,
+		CacheCreationPricePerToken:         2e-6,
 		CacheCreationPricePerTokenPriority: 4e-6,
-		CacheCreation5mPrice:           2e-6,
-		CacheCreation1hPrice:           3e-6,
-		CacheReadPricePerToken:         0.2e-6,
-		CacheReadPricePerTokenPriority: 0.4e-6,
+		CacheCreation5mPrice:               2e-6,
+		CacheCreation1hPrice:               3e-6,
+		CacheReadPricePerToken:             0.2e-6,
+		CacheReadPricePerTokenPriority:     0.4e-6,
 	}
 	iv := &PricingInterval{
 		InputMultiplier:      testPtrFloat64(1.5),
@@ -135,8 +135,8 @@ func TestIntervalToModelPricing_AppliesInputMultiplier(t *testing.T) {
 func TestIntervalToModelPricing_ExplicitPriceWinsOverMultiplier(t *testing.T) {
 	base := &ModelPricing{InputPricePerToken: 2e-6, InputPricePerTokenPriority: 4e-6}
 	iv := &PricingInterval{
-		InputPrice:       testPtrFloat64(5e-6),
-		InputMultiplier:  testPtrFloat64(9),
+		InputPrice:      testPtrFloat64(5e-6),
+		InputMultiplier: testPtrFloat64(9),
 	}
 
 	pricing := intervalToModelPricing(iv, base, nil)

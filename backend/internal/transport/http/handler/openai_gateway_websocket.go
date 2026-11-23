@@ -54,12 +54,6 @@ func (p *openAIWSTurnPricing) freeze(at time.Time) {
 	p.mu.Unlock()
 }
 
-func (p *openAIWSTurnPricing) current() time.Time {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.at
-}
-
 // currentOr falls back to the relay-reported turn start when no BeforeTurn
 // freeze happened, which is the normal case for the passthrough first turn.
 func (p *openAIWSTurnPricing) currentOr(fallback time.Time) time.Time {
