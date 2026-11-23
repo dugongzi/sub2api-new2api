@@ -21,11 +21,14 @@ function makePricing(overrides: Partial<PricingFormEntry> = {}): PricingFormEntr
     input_price: null,
     output_price: null,
     cache_write_price: null,
+    cache_write_1h_price: null,
+    cache_write_12h_price: null,
     cache_read_price: null,
     image_input_price: null,
     image_output_price: null,
     per_request_price: null,
     intervals: [],
+    time_pricing: { timezone: 'Asia/Shanghai', weekdays_only: false, periods: [] },
     ...overrides,
   }
 }
@@ -60,6 +63,8 @@ function makeAPIpricing(
     input_price: null,
     output_price: null,
     cache_write_price: null,
+    cache_write_1h_price: null,
+    cache_write_12h_price: null,
     cache_read_price: null,
     image_input_price: null,
     image_output_price: null,
@@ -163,11 +168,16 @@ describe('channel form codec', () => {
       'input_price',
       'output_price',
       'cache_write_price',
+      'cache_write_1h_price',
+      'cache_write_12h_price',
       'cache_read_price',
+      'fast_multiplier',
+      'flex_multiplier',
       'image_input_price',
       'image_output_price',
       'per_request_price',
       'intervals',
+      'time_pricing',
     ])
     expect(result.model_pricing[0]).toMatchObject({
       input_price: 0.000005,
@@ -378,5 +388,44 @@ describe('channel form codec', () => {
     expect(apiRules[0].group_ids).toStrictEqual([1, 2])
     expect(apiRules[0].account_ids).toStrictEqual([11])
     expect(apiRules[0].pricing[0].models).toStrictEqual(['shared'])
+  })
+
+  it('round-trips cache write TTL prices through per-MTok form units', () => {
+    const channel = makeChannel({
+      model_pricing: [makeAPIpricing('openai', {
+        models: ['gpt-ttl'],
+        cache_write_price: 1e-6,
+        cache_write_1h_price: 2e-6,
+        cache_write_12h_price: 3e-6,
+        intervals: [{
+          min_tokens: 0,
+          max_tokens: null,
+          tier_label: '',
+          input_price: null,
+          output_price: null,
+          cache_write_price: 4e-6,
+          cache_write_1h_price: 5e-6,
+          cache_write_12h_price: 6e-6,
+          cache_read_price: null,
+          per_request_price: null,
+          sort_order: 0,
+        }],
+      })],
+    })
+
+    const sections = channelToPlatformSections(channel, [makeGroup(1, 'openai')])
+    const entry = sections[0].model_pricing[0]
+    expect(entry.cache_write_price).toBe(1)
+    expect(entry.cache_write_1h_price).toBe(2)
+    expect(entry.cache_write_12h_price).toBe(3)
+    expect(entry.intervals[0].cache_write_1h_price).toBe(5)
+    expect(entry.intervals[0].cache_write_12h_price).toBe(6)
+
+    const api = buildChannelAPIFields([{ ...sections[0], enabled: true }]).model_pricing[0]
+    expect(api.cache_write_price).toBe(1e-6)
+    expect(api.cache_write_1h_price).toBe(2e-6)
+    expect(api.cache_write_12h_price).toBe(3e-6)
+    expect(api.intervals[0].cache_write_1h_price).toBe(5e-6)
+    expect(api.intervals[0].cache_write_12h_price).toBe(6e-6)
   })
 })

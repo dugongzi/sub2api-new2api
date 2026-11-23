@@ -51,6 +51,50 @@ function mountTable(
 }
 
 describe('PlazaModelPricingTable', () => {
+  it('shows independent 12h prices without a 1h label', () => {
+    const model = tokenModel({ name: 'gpt-6-luna', platform: 'openai' })
+    model.pricing!.cache_write_price = null
+    model.pricing!.cache_write_12h_price = 2e-6
+    model.pricing!.cache_read_price = null
+    model.official_pricing = { input_price: 1e-6, output_price: 5e-6, cache_write_price: null, cache_write_12h_price: 4e-6, cache_read_price: null }
+    const wrapper = mountTable([model], 0.5)
+    try {
+      expect(wrapper.text()).toContain('(12h $1.00)')
+      expect(wrapper.text()).toContain('(12h $4.00)')
+      expect(wrapper.text()).not.toContain('(1h')
+    } finally {
+      wrapper.unmount()
+    }
+  })
+
+  it('官方价有长上下文阶梯时每档一行展示，含 12h 写入价', () => {
+    const model = tokenModel({ name: 'gpt-6-luna', platform: 'openai' })
+    model.official_pricing = {
+      input_price: 1e-6,
+      output_price: 5e-6,
+      cache_write_price: 1.25e-6,
+      cache_read_price: 0.1e-6,
+      intervals: [
+        { min_tokens: 0, max_tokens: 272000, tier_label: '≤272K', input_price: 1e-6, output_price: 5e-6, cache_write_price: 1.25e-6, cache_write_1h_price: null, cache_write_12h_price: 2.5e-6, cache_read_price: 0.1e-6, per_request_price: null },
+        { min_tokens: 272000, max_tokens: null, tier_label: '>272K', input_price: 2e-6, output_price: 7.5e-6, cache_write_price: 2.5e-6, cache_write_1h_price: null, cache_write_12h_price: 5e-6, cache_read_price: 0.1e-6, per_request_price: null }
+      ]
+    }
+    const wrapper = mountTable([model], 1)
+    try {
+      const text = wrapper.text()
+      expect(text).toContain('≤272K')
+      expect(text).toContain('>272K')
+      // 两档输入价各自展示
+      expect(text).toContain('$1.00')
+      expect(text).toContain('$2.00')
+      // 两档 12h 写入价各自展示
+      expect(text).toContain('(12h $2.50)')
+      expect(text).toContain('(12h $5.00)')
+    } finally {
+      wrapper.unmount()
+    }
+  })
+
   it('倍率为 1 时展示渠道单价原值($/1M),价格保底 2 位小数', () => {
     const wrapper = mountTable([tokenModel()], 1)
     const text = wrapper.text()

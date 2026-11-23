@@ -695,15 +695,13 @@
       6443,
       6444,
       6447,
-      6474,
       6514,
       6535,
       6571,
       7412,
       7573,
       7613,
-      7730,
-      8606
+      7730
     ],
     "status": "not-adopted-billing-contract",
     "capability_complete": false,
@@ -711,6 +709,40 @@
     "owner_files": [
       "backend/internal/application/service/billing_service.go",
       "backend/internal/application/service/openai_gateway_usage.go",
+      "docs/UPSTREAM_SYNC_20261112.md",
+      "docs/UPSTREAM_SYNC_20260930.md"
+    ]
+  },
+  {
+    "prs": [
+      6474
+    ],
+    "status": "ported-redesigned",
+    "capability_complete": true,
+    "decision": "已按当前 owner 回捞上游 1h cache-write 定价：migration 264 扩四张价卡表；渠道/分组/账号统计/模型广场/前端表单与展示接通，并补回 Fable 5/5.1 兜底价。cache_write_price 保持 5m 语义，1h 留空回退 5m，存量账单不变；不接受上游会改变默认账单的其余子项。",
+    "owner_files": [
+      "backend/internal/application/service/billing_service.go",
+      "backend/internal/application/service/openai_gateway_usage.go",
+      "backend/internal/application/service/model_pricing_resolver.go",
+      "backend/migrations/264_cache_write_1h_pricing.sql",
+      "frontend/src/features/admin-channels/presentation/widgets/PricingEntryCard.vue",
+      "docs/UPSTREAM_SYNC_20261112.md",
+      "docs/UPSTREAM_SYNC_20260930.md"
+    ]
+  },
+  {
+    "prs": [
+      8606
+    ],
+    "status": "ported-redesigned",
+    "capability_complete": true,
+    "decision": "已按当前 owner 回捞上游 OpenAI 30m/12h cache-write TTL：migration 265（上游 250 改写）增 usage_logs 两列与四张价卡表 12h 价；解析要求 30m+12h 穷尽等于聚合值，否则回退聚合价；补回 OpenAI 高价缓存模型的 12h 默认价（输入价 2.5 倍）；可靠队列指纹保持不变以兼容滚动升级。",
+    "owner_files": [
+      "backend/internal/application/service/billing_service.go",
+      "backend/internal/application/service/openai_gateway_usage.go",
+      "backend/internal/application/service/openai_gateway_response_handling.go",
+      "backend/internal/infrastructure/repository/usage_log_repo_insert.go",
+      "backend/migrations/265_openai_cache_write_ttl.sql",
       "docs/UPSTREAM_SYNC_20261112.md",
       "docs/UPSTREAM_SYNC_20260930.md"
     ]

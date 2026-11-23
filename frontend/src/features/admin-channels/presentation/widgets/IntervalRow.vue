@@ -24,8 +24,18 @@
           type="number" step="any" min="0" class="input mt-0.5 text-xs" />
       </div>
       <div class="min-w-28 flex-1">
-        <label class="text-xs text-gray-400">{{ t('admin.channels.form.cacheWritePriceShort') }} <span class="text-gray-300">$/M</span></label>
+        <label class="text-xs text-gray-400">{{ t(isOpenAI ? 'admin.channels.form.cacheWrite30mPrice' : 'admin.channels.form.cacheWrite5mPriceShort') }} <span class="text-gray-300">$/M</span></label>
         <input :value="interval.cache_write_price" @input="emitField('cache_write_price', ($event.target as HTMLInputElement).value)"
+          type="number" step="any" min="0" class="input mt-0.5 text-xs" />
+      </div>
+      <div v-if="!isOpenAI" class="min-w-28 flex-1">
+        <label class="text-xs text-gray-400">{{ t('admin.channels.form.cacheWrite1hPriceShort') }} <span class="text-gray-300">$/M</span></label>
+        <input :value="interval.cache_write_1h_price" @input="emitField('cache_write_1h_price', ($event.target as HTMLInputElement).value)"
+          type="number" step="any" min="0" class="input mt-0.5 text-xs" />
+      </div>
+      <div v-if="isOpenAI" class="min-w-28 flex-1">
+        <label class="text-xs text-gray-400" :title="t('admin.channels.form.cacheWrite12hHint')">{{ t('admin.channels.form.cacheWrite12hPriceShort') }} <span class="text-gray-300">$/M</span></label>
+        <input :value="interval.cache_write_12h_price" @input="emitField('cache_write_12h_price', ($event.target as HTMLInputElement).value)"
           type="number" step="any" min="0" class="input mt-0.5 text-xs" />
       </div>
       <div class="min-w-28 flex-1">
@@ -33,6 +43,28 @@
         <input :value="interval.cache_read_price" @input="emitField('cache_read_price', ($event.target as HTMLInputElement).value)"
           type="number" step="any" min="0" class="input mt-0.5 text-xs" />
       </div>
+      <template v-if="enableMultipliers">
+        <div class="min-w-24 flex-1">
+          <label class="text-xs text-gray-400">{{ t('admin.channels.form.inputMultiplier') }}</label>
+          <input :value="interval.input_multiplier" @input="emitField('input_multiplier', ($event.target as HTMLInputElement).value)"
+            type="number" step="any" min="0.000001" class="input mt-0.5 text-xs" />
+        </div>
+        <div class="min-w-24 flex-1">
+          <label class="text-xs text-gray-400">{{ t('admin.channels.form.outputMultiplier') }}</label>
+          <input :value="interval.output_multiplier" @input="emitField('output_multiplier', ($event.target as HTMLInputElement).value)"
+            type="number" step="any" min="0.000001" class="input mt-0.5 text-xs" />
+        </div>
+        <div class="min-w-24 flex-1">
+          <label class="text-xs text-gray-400">{{ t('admin.channels.form.cacheWriteMultiplier') }}</label>
+          <input :value="interval.cache_write_multiplier" @input="emitField('cache_write_multiplier', ($event.target as HTMLInputElement).value)"
+            type="number" step="any" min="0.000001" class="input mt-0.5 text-xs" />
+        </div>
+        <div class="min-w-24 flex-1">
+          <label class="text-xs text-gray-400">{{ t('admin.channels.form.cacheReadMultiplier') }}</label>
+          <input :value="interval.cache_read_multiplier" @input="emitField('cache_read_multiplier', ($event.target as HTMLInputElement).value)"
+            type="number" step="any" min="0.000001" class="input mt-0.5 text-xs" />
+        </div>
+      </template>
     </template>
 
     <!-- Per-request / Image mode: tier label + context range + price -->
@@ -79,7 +111,11 @@ const { t } = useI18n()
 const props = defineProps<{
   interval: IntervalFormEntry
   mode: BillingMode
+  platform?: string
+  enableMultipliers?: boolean
 }>()
+
+const isOpenAI = computed(() => props.platform === 'openai')
 
 const emit = defineEmits<{
   update: [interval: IntervalFormEntry]
@@ -92,7 +128,13 @@ const isEmpty = computed(() => {
   return (iv.input_price == null || iv.input_price === '') &&
     (iv.output_price == null || iv.output_price === '') &&
     (iv.cache_write_price == null || iv.cache_write_price === '') &&
+    (iv.cache_write_1h_price == null || iv.cache_write_1h_price === '') &&
+    (iv.cache_write_12h_price == null || iv.cache_write_12h_price === '') &&
     (iv.cache_read_price == null || iv.cache_read_price === '') &&
+    (iv.input_multiplier == null || iv.input_multiplier === '') &&
+    (iv.output_multiplier == null || iv.output_multiplier === '') &&
+    (iv.cache_write_multiplier == null || iv.cache_write_multiplier === '') &&
+    (iv.cache_read_multiplier == null || iv.cache_read_multiplier === '') &&
     (iv.per_request_price == null || iv.per_request_price === '')
 })
 

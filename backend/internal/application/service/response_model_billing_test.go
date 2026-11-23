@@ -552,7 +552,7 @@ func BenchmarkOpenAIRecordUsageCostResolution_DefaultMode(b *testing.B) {
 	for b.Loop() {
 		resolution, err := svc.calculateOpenAIRecordUsageCostWithResolution(
 			context.Background(), result, &APIKey{}, []string{openAIPriceyResponseModel},
-			1.1, 1.1, 1.1, 1.1, tokens, "", false, false,
+			1.1, 1.1, 1.1, 1.1, time.Time{}, tokens, "", false, false,
 		)
 		if err != nil {
 			b.Fatal(err)

@@ -1054,7 +1054,7 @@ export default {
         title: 'Per-model group pricing',
         description: 'Overrides channel and built-in prices for matching models. Long-context tiers come from official presets; token cards only set the base rate. Use per-request tiers for media and audio variants.',
         longContext: 'Enable long-context tier pricing',
-        longContextHint: 'When enabled, official or channel long-context tiers apply. When disabled, token models stay on the first-tier base rate.',
+        longContextHint: 'When enabled, official or channel long-context tiers apply. When disabled, token models stay on the first-tier base rate unless the account explicitly enables long-context billing.',
         add: 'Add model price',
         modelInputHint: 'Press Enter to add a model. Paste comma-, semicolon-, or line-separated names for batch input.'
       },

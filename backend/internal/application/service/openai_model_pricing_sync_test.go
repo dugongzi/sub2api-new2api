@@ -128,7 +128,7 @@ func TestOpenAIUltrafastUnifiedChannelPricing(t *testing.T) {
 	resolved := &ResolvedPricing{Mode: BillingModeToken, Source: PricingSourceChannel,
 		BasePricing: &ModelPricing{InputPricePerToken: 3e-6, OutputPricePerToken: 7e-6,
 			CacheCreationPricePerToken: 4e-6, CacheReadPricePerToken: 0.3e-6,
-			ApplyServiceTierMultiplier: true}}
+			UltrafastCostMultiplier: 6}}
 	input := CostInput{Ctx: context.Background(), Model: "gpt-6.1-sol", RateMultiplier: 1,
 		Tokens:   UsageTokens{InputTokens: 1000, OutputTokens: 10, CacheCreationTokens: 200, CacheReadTokens: 100},
 		Resolver: resolver, Resolved: resolved}

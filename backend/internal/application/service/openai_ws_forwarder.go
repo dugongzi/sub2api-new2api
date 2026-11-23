@@ -254,6 +254,12 @@ type OpenAIWSIngressHooks struct {
 	// before channel or account mapping. Ingress modes preserve it for usage
 	// attribution while MapRequestModel determines the upstream model.
 	InitialRequestModel string
+	// InitialTurnStartedAt is the handshake time that stands in for the first
+	// turn's billing instant when passthrough skips BeforeTurn.
+	InitialTurnStartedAt time.Time
+	// TurnStarted reports the accepted start time of a completed relay turn so
+	// the ingress can stamp that turn's billing instant.
+	TurnStarted func(turn int, startedAt time.Time)
 	// MaxReasoningEffort limits explicit reasoning effort values for this WS session.
 	MaxReasoningEffort string
 	// ReasoningEffortMappings rewrites explicit effort values for this WS session.

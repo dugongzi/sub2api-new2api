@@ -1720,7 +1720,8 @@ func TestGetModelPricingWithChannel_PreservesUpstreamTierMetadata(t *testing.T) 
 		InputPrice: testPtrFloat64(6.25e-6),
 	})
 	require.NoError(t, err)
-	require.True(t, pricing.ApplyServiceTierMultiplier)
+	// 渠道只覆盖 Standard 输入价，priority 价按目录比例（2x）推导。
+	require.InDelta(t, 12.5e-6, pricing.InputPricePerTokenPriority, 1e-12)
 	require.InDelta(t, 40e-6, pricing.OutputPricePerTokenPriority, 1e-12)
 	require.InDelta(t, 0.8e-6, pricing.CacheReadPricePerTokenPriority, 1e-12)
 }

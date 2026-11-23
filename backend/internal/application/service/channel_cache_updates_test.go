@@ -31,8 +31,8 @@ func (b *channelUpdateBusStub) SubscribeUpdates(callback func()) func() {
 func TestChannelCacheUpdatesPropagateWithoutNotificationLoop(t *testing.T) {
 	bus := &channelUpdateBusStub{}
 	repo := &mockChannelRepository{}
-	first := ProvideChannelService(repo, nil, nil, nil, bus)
-	second := ProvideChannelService(repo, nil, nil, nil, bus)
+	first := ProvideChannelService(repo, nil, nil, nil, nil, bus)
+	second := ProvideChannelService(repo, nil, nil, nil, nil, bus)
 	t.Cleanup(first.Stop)
 	t.Cleanup(second.Stop)
 	old, err := second.loadCache(context.Background())

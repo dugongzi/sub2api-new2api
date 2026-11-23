@@ -203,7 +203,21 @@ const normalizedPlatforms = computed(() => {
   )
 })
 
-const upstreamSyncPlatforms = new Set(['anthropic', 'openai', 'gemini', 'antigravity', 'grok', 'multimodal'])
+// 与后端 buildUpstreamModelsRequest 支持的平台保持一致：
+// 国产渠道（kimi/zhipu/deepseek/minimax）与 opencode_go 走 OpenAI 兼容 /models。
+const upstreamSyncPlatforms = new Set([
+  'anthropic',
+  'openai',
+  'gemini',
+  'antigravity',
+  'grok',
+  'multimodal',
+  'kimi',
+  'zhipu',
+  'deepseek',
+  'minimax',
+  'opencode_go'
+])
 const canSyncUpstream = computed(() => {
   if (props.accountId) {
     if (normalizedPlatforms.value.length === 0) return true

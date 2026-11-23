@@ -5,7 +5,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { UserSupportedModelPricing } from '@/features/channels-user/data/datasources/channelsUserDatasource'
+import type { UserPricingInterval, UserSupportedModelPricing } from '@/features/channels-user/data/datasources/channelsUserDatasource'
 
 /** LiteLLM 官方参考价（USD per token，字段缺失 = 官方数据未覆盖）。 */
 export interface PlazaOfficialPricing {
@@ -15,14 +15,46 @@ export interface PlazaOfficialPricing {
   cache_write_price: number | null
   /** 1h 缓存写入（LiteLLM cache_creation_above_1hr），多数模型缺失。 */
   cache_write_1h_price?: number | null
+  /** OpenAI 12h 缓存写入价；仅在上游/价卡明确给出时存在。 */
+  cache_write_12h_price?: number | null
   cache_read_price: number | null
+  /** 官方长上下文阶梯，仅多档模型给出（不受分组开关影响）。 */
+  intervals?: UserPricingInterval[]
+}
+
+/**
+ * 多档时的计价基准：
+ * - whole_request：整单按所在档单价计价（目录阶梯、渠道区间）；
+ * - marginal：仅超出阈值的部分按该档单价计价（平台旧规则）。
+ */
+export type PlazaLongContextBasis = 'whole_request' | 'marginal'
+
+/** 分时倍率时段：配置时区当天 [start_time, end_time) 内整单实付乘 multiplier。 */
+export interface PlazaTimePricingPeriod {
+  start_time: string
+  end_time: string
+  multiplier: number
+}
+
+/** 计费会生效的分时倍率（仅倍率 ≠ 1 的时段，已按开始时间升序）。 */
+export interface PlazaTimePricing {
+  /** IANA 时区名，如 Asia/Shanghai。 */
+  timezone: string
+  /** true 时时段仅周一至周五生效，周末整天按标准价计费。 */
+  weekdays_only?: boolean
+  periods: PlazaTimePricingPeriod[]
 }
 
 export interface PlazaModel {
   name: string
   platform: string
+  /** 实收口径的展示定价：档位均为标准时段价。 */
   pricing: UserSupportedModelPricing | null
   official_pricing: PlazaOfficialPricing | null
+  /** 仅多档模型返回。 */
+  long_context_basis?: PlazaLongContextBasis
+  /** 仅配置了分时倍率的模型返回。 */
+  time_pricing?: PlazaTimePricing
 }
 
 export interface ModelPlazaGroup {
@@ -45,6 +77,8 @@ export interface ModelPlazaGroup {
   image_rate_multiplier: number
   video_rate_independent?: boolean
   video_rate_multiplier?: number
+  /** 分组是否启用长上下文阶梯计费；false 时实付列只展示最低档，官方阶梯仅供参考。 */
+  long_context_pricing_enabled: boolean
   models: PlazaModel[]
 }
 

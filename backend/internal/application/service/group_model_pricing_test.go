@@ -19,6 +19,32 @@ func testGroupPricing(input, output float64, models ...string) ChannelModelPrici
 	}
 }
 
+// 对齐上游：分组模型定价不支持分时倍率，非空 periods 必须被拒绝。
+func TestNormalizeGroupModelPricingRejectsTimePricing(t *testing.T) {
+	entry := testGroupPricing(7e-6, 21e-6, "claude-sonnet-4.5")
+	entry.TimePricing = &ChannelTimePricing{
+		Timezone: "Asia/Shanghai",
+		Periods: []ChannelTimePricingPeriod{{
+			StartTime:  "09:00",
+			EndTime:    "12:00",
+			Multiplier: 2,
+		}},
+	}
+
+	_, err := normalizeGroupModelPricing(PlatformAnthropic, []ChannelModelPricing{entry})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "GROUP_MODEL_TIME_PRICING_UNSUPPORTED")
+}
+
+func TestNormalizeGroupModelPricingAllowsEmptyTimePricing(t *testing.T) {
+	entry := testGroupPricing(7e-6, 21e-6, "claude-sonnet-4.5")
+	entry.TimePricing = &ChannelTimePricing{Timezone: "Asia/Shanghai"}
+
+	out, err := normalizeGroupModelPricing(PlatformAnthropic, []ChannelModelPricing{entry})
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+}
+
 func TestGroupModelPricingIndexExactAndWildcard(t *testing.T) {
 	exact := testGroupPricing(7e-6, 21e-6, "claude-sonnet-4.5")
 	wildcard := testGroupPricing(5e-6, 15e-6, "claude-*")

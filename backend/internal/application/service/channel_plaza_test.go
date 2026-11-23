@@ -7,6 +7,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/DR-lin-eng/sub2api-no2api/internal/platform/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,6 +18,10 @@ func newPlazaChannelService(channels []Channel, groups []Group, pricing *Pricing
 	}
 	svc := NewChannelService(repo, &stubGroupRepoForAvailable{activeGroups: groups}, nil, nil)
 	svc.pricingService = pricing
+	if pricing != nil {
+		// 官方参考价与计费同源，取自 BillingService.GetModelPricing。
+		svc.billingService = NewBillingService(&config.Config{}, pricing)
+	}
 	return svc
 }
 
@@ -202,6 +207,29 @@ func TestListPlazaGroups_OfficialPricingFill(t *testing.T) {
 	require.Nil(t, byName["unknown-model"].OfficialPricing)
 	// TokenPricingAbsent 条目不作为官方 token 价展示
 	require.Nil(t, byName["token-absent"].OfficialPricing)
+}
+
+func TestListPlazaGroups_OfficialOpenAI12hPricing(t *testing.T) {
+	pricingSvc := newStubPricingServiceFromMap(map[string]*LiteLLMModelPricing{
+		"gpt-6-luna": {
+			Mode:                        "chat",
+			InputCostPerToken:           0.1e-6,
+			OutputCostPerToken:          0.5e-6,
+			CacheCreationInputTokenCost: 0.125e-6,
+			CacheReadInputTokenCost:     0.01e-6,
+		},
+	})
+	channels := []Channel{plazaPricedChannel(1, "ch", []int64{10}, PlatformOpenAI, "gpt-6-luna")}
+	groups := []Group{{ID: 10, Name: "g", Platform: PlatformOpenAI, RateMultiplier: 1}}
+	svc := newPlazaChannelService(channels, groups, pricingSvc)
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Len(t, out[0].Models, 1)
+	official := out[0].Models[0].OfficialPricing
+	require.NotNil(t, official)
+	require.NotNil(t, official.CacheWrite12hPrice)
+	require.InDelta(t, 0.25e-6, *official.CacheWrite12hPrice, 1e-15)
 }
 
 func TestListPlazaGroups_AutoPublicModelsAddsDefaultsAndAccountModels(t *testing.T) {

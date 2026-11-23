@@ -410,6 +410,7 @@ export interface EditAccountAdvancedContext
   editWeeklyResetMode: Ref<ResetMode>
   expiresAtInput: WritableComputedRef<string>
   form: EditAccountFormState
+  groups: ComputedRef<AdminGroup[]>
   handleOllamaCloudUsageUpdated: (state: OllamaCloudUsageState) => void
   interceptWarmupRequests: Ref<boolean>
   isOpenAIPersonalAccessTokenAccount: ComputedRef<boolean>

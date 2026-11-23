@@ -5,7 +5,9 @@ import type {
 } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import {
   apiIntervalsToForm,
+  apiTimePricingToForm,
   formIntervalsToAPI,
+  formTimePricingToAPI,
   mTokToPerToken,
   perTokenToMTok,
   type PricingFormEntry,
@@ -72,7 +74,17 @@ function pricingFormEntryToAPI(
     input_price: mTokToPerToken(entry.input_price),
     output_price: mTokToPerToken(entry.output_price),
     cache_write_price: mTokToPerToken(entry.cache_write_price),
+    cache_write_1h_price: mTokToPerToken(entry.cache_write_1h_price),
+    cache_write_12h_price: mTokToPerToken(entry.cache_write_12h_price),
     cache_read_price: mTokToPerToken(entry.cache_read_price),
+    fast_multiplier:
+      entry.fast_multiplier != null && entry.fast_multiplier !== ''
+        ? Number(entry.fast_multiplier)
+        : null,
+    flex_multiplier:
+      entry.flex_multiplier != null && entry.flex_multiplier !== ''
+        ? Number(entry.flex_multiplier)
+        : null,
     image_input_price: mTokToPerToken(entry.image_input_price),
     image_output_price: mTokToPerToken(entry.image_output_price),
     per_request_price:
@@ -80,18 +92,7 @@ function pricingFormEntryToAPI(
         ? Number(entry.per_request_price)
         : null,
     intervals: formIntervalsToAPI(entry.intervals || []),
-    ...(entry.time_pricing && entry.time_pricing.periods.length > 0
-      ? {
-          time_pricing: {
-            timezone: entry.time_pricing.timezone,
-            periods: entry.time_pricing.periods.map(period => ({
-              start_time: period.start_time,
-              end_time: period.end_time,
-              multiplier: Number(period.multiplier)
-            }))
-          }
-        }
-      : {}),
+    time_pricing: formTimePricingToAPI(entry.time_pricing),
   }
 }
 
@@ -105,17 +106,16 @@ function pricingAPIEntryToForm(
     input_price: perTokenToMTok(entry.input_price),
     output_price: perTokenToMTok(entry.output_price),
     cache_write_price: perTokenToMTok(entry.cache_write_price),
+    cache_write_1h_price: perTokenToMTok(entry.cache_write_1h_price),
+    cache_write_12h_price: perTokenToMTok(entry.cache_write_12h_price),
     cache_read_price: perTokenToMTok(entry.cache_read_price),
+    fast_multiplier: entry.fast_multiplier,
+    flex_multiplier: entry.flex_multiplier,
     image_input_price: perTokenToMTok(entry.image_input_price),
     image_output_price: perTokenToMTok(entry.image_output_price),
     per_request_price: entry.per_request_price,
     intervals: apiIntervalsToForm(entry.intervals || []),
-    time_pricing: entry.time_pricing
-      ? {
-          timezone: entry.time_pricing.timezone,
-          periods: (entry.time_pricing.periods || []).map(period => ({ ...period }))
-        }
-      : null,
+    time_pricing: apiTimePricingToForm(entry.time_pricing),
   }
 }
 
